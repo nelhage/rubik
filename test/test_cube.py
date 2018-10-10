@@ -37,3 +37,12 @@ def test_moves():
       if i == 0:
         assert cube == rotation, "Cube() is the identity"
     assert cube == id, "{}x4 is the identity".format(face)
+
+def test_invert():
+  id = rubik.Cube()
+  assert id == id.invert()
+
+  for face in 'LRUDFB':
+    rotation = getattr(rubik.Rotation, face)
+    assert rotation.apply(rotation.invert()) == id, "{}' {} is the identity".format(face, face)
+    assert rotation.invert().apply(rotation) == id, "{} {}' is the identity".format(face, face)

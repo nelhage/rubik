@@ -125,6 +125,28 @@ class Cube(object):
       tuple(corner_align),
     )
 
+  def invert(self):
+    edge_perm = [0]*12
+    for i, j in enumerate(self.edge_perm):
+      edge_perm[j] = i
+    edge_align = [0]*12
+    for i, j in enumerate(edge_perm):
+      edge_align[i] = (2 - self.edge_align[j]) % 2
+
+    corner_perm = [0]*8
+    for i, j in enumerate(self.corner_perm):
+      corner_perm[j] = i
+    corner_align = [0]*8
+    for i, j in enumerate(corner_perm):
+      corner_align[i] = (3 - self.corner_align[j]) % 3
+
+    return Cube(
+      tuple(edge_perm),
+      tuple(edge_align),
+      tuple(corner_perm),
+      tuple(corner_align),
+    )
+
 class Rotation(object):
   def _cube(edge_perm, edge_align, corner_perm, corner_align):
     for i, j in enumerate(edge_perm):
