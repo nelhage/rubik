@@ -26,3 +26,14 @@ def test_render():
   cube = rubik.Cube()
   renderer = rubik.Renderer(cube)
   renderer.render()
+
+def test_moves():
+  id = rubik.Cube()
+  for face in 'LRUDFB':
+    rotation = getattr(rubik.Rotation, face)
+    cube = id
+    for i in range(4):
+      cube = cube.apply(rotation)
+      if i == 0:
+        assert cube == rotation, "Cube() is the identity"
+    assert cube == id, "{}x4 is the identity".format(face)

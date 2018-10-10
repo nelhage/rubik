@@ -1,6 +1,6 @@
 import attr
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, cmp=True)
 class Cube(object):
   edge_perm    = attr.ib(default = attr.Factory(lambda: tuple(range(12))))
   edge_align   = attr.ib(default = attr.Factory(lambda: (0,) * 12))
@@ -109,7 +109,23 @@ class Cube(object):
     else:
       return facemap[facelet]
 
-class Rotations(object):
+  def apply(self, other):
+    edge_perm  = [self.edge_perm[i] for i in other.edge_perm]
+    edge_align = [
+      (self.edge_align[i]+other.edge_align[j])%2 for j,i in enumerate(other.edge_perm)
+    ]
+    corner_perm  = [self.corner_perm[i] for i in other.corner_perm]
+    corner_align = [
+      (self.corner_align[i]+other.corner_align[j])%3 for j,i in enumerate(other.corner_perm)
+    ]
+    return Cube(
+      tuple(edge_perm),
+      tuple(edge_align),
+      tuple(corner_perm),
+      tuple(corner_align),
+    )
+
+class Rotation(object):
   def _cube(edge_perm, edge_align, corner_perm, corner_align):
     for i, j in enumerate(edge_perm):
       if j == None:
@@ -135,7 +151,7 @@ class Rotations(object):
     edge_perm    = [_, _, 6, _, _, 2, 10, _, _, _, 5, _],
     edge_align   = [0, 0, 1, 0, 0, 1, 1,  0, 0, 0, 1, 0],
     corner_perm  = [_, 2, 6, _, _, 1, 5, _],
-    corner_align = [0, 1, 1, 0, 0, 1, 2, 0],
+    corner_align = [0, 2, 1, 0, 0, 1, 2, 0],
   )
 
   U = _cube(
@@ -165,4 +181,5 @@ class Rotations(object):
     corner_align = [2, 1, 0, 0, 1, 2, 0, 0],
   )
 
+  del(_cube)
   del(_)
