@@ -21,3 +21,8 @@ def test_facemap():
     sorted(corners) ==
     [(i, j) for i in range(8) for j in range(3)]
   )
+
+def test_render():
+  cube = rubik.Cube()
+  renderer = rubik.Renderer(cube)
+  renderer.render()

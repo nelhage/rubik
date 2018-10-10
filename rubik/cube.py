@@ -1,6 +1,40 @@
-from io import StringIO
+import attr
 
+@attr.s(frozen=True, slots=True)
 class Cube(object):
+  edge_perm    = attr.ib(default = attr.Factory(lambda: tuple(range(12))))
+  edge_align   = attr.ib(default = attr.Factory(lambda: (0,) * 12))
+  corner_perm  = attr.ib(default = attr.Factory(lambda: tuple(range(8))))
+  corner_align = attr.ib(default = attr.Factory(lambda: (0,) * 8))
+
+  @edge_perm.validator
+  def _check_edge_perm(self, attr, value):
+    if not isinstance(value, tuple) or len(value) != 12:
+      raise TypeError("edge_perm must be a 12-tuple")
+    if set(value) != set(range(12)):
+      raise ValueError("edge_param must be a permutation on (0, 12]. Got: {}".format(value))
+
+  @edge_align.validator
+  def _check_edge_align(self, attr, value):
+    if not isinstance(value, tuple) or len(value) != 12:
+      raise TypeError("edge_align must be a 12-tuple")
+    if [v for v in value if v not in (0, 1)]:
+      raise ValueError("elements of edge_align must be in {0, 1}. Got: {}".format(value))
+
+  @corner_perm.validator
+  def _check_corner_perm(self, attr, value):
+    if not isinstance(value, tuple) or len(value) != 8:
+      raise TypeError("corner_perm must be a 8-tuple")
+    if set(value) != set(range(8)):
+      raise ValueError("corner_param must be a permutation on (0, 8]. Got: {}".format(value))
+
+  @corner_align.validator
+  def _check_corner_align(self, attr, value):
+    if not isinstance(value, tuple) or len(value) != 8:
+      raise TypeError("corner_align must be a 8-tuple")
+    if [v for v in value if v not in (0, 1, 2)]:
+      raise ValueError("elements of corner_align must be in {0, 1, 2}. Got: {}".format(value))
+
   R,G,W,B,Y,O = range(6)
 
   EDGE_COLORS = (
@@ -62,12 +96,6 @@ class Cube(object):
     ],
   }
 
-  def __init__(self):
-    self.edge_perm  = list(range(12))
-    self.edge_align = [0] * 12
-    self.corner_perm  = list(range(8))
-    self.corner_align = [0] * 8
-
   def facelet_color(self, face, facelet):
     facemap = self.FACE_MAP[face]
     if facelet in [0, 2, 6, 8]:
@@ -81,68 +109,60 @@ class Cube(object):
     else:
       return facemap[facelet]
 
-class Renderer(object):
-  def __init__(self, cube):
-    self.cube = cube
-    self.buffer = StringIO()
+class Rotations(object):
+  def _cube(edge_perm, edge_align, corner_perm, corner_align):
+    for i, j in enumerate(edge_perm):
+      if j == None:
+        edge_perm[i] = i
+    for i, j in enumerate(corner_perm):
+      if j == None:
+        corner_perm[i] = i
+    return Cube(tuple(edge_perm),
+                tuple(edge_align),
+                tuple(corner_perm),
+                tuple(corner_align))
 
-  COLORMAP   = [9, 10, 15, 12, 11, 3]
-  COLORCHARS = "RGWBYO"
+  _ = None
 
-  def setcolor(self, color):
-    if color < 8:
-      return "\x1b[{}m".format(30+color)
-    else:
-      return "\x1b[1;{}m".format(30+color-8)
+  L = _cube(
+    edge_perm    = [4, _, _, _, 8, _, _, 0, 7, _, _, _],
+    edge_align   = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    corner_perm  = [4, _, _, 0, 7, _, _, 3],
+    corner_align = [1, 0, 0, 2, 2, 0, 0, 1],
+  )
 
-  def resetcolor(self):
-    return "\x1b[0m"
+  R = _cube(
+    edge_perm    = [_, _, 6, _, _, 2, 10, _, _, _, 5, _],
+    edge_align   = [0, 0, 1, 0, 0, 1, 1,  0, 0, 0, 1, 0],
+    corner_perm  = [_, 2, 6, _, _, 1, 5, _],
+    corner_align = [0, 1, 1, 0, 0, 1, 2, 0],
+  )
 
-  def facelet(self, face, i, j):
-    color = self.cube.facelet_color(face, 3*i+j)
-    return " " + self.setcolor(self.COLORMAP[color]) + self.COLORCHARS[color] + self.resetcolor() + " "
+  U = _cube(
+    edge_perm    = [3, 0, 1, 2, _, _, _, _, _, _, _, _],
+    edge_align   = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    corner_perm  = [3, 0, 1, 2, _, _, _, _],
+    corner_align = [0, 0, 0, 0, 0, 0, 0, 0],
+  )
+  D = _cube(
+    edge_perm    = [_, _, _, _, _, _, _, _, 9, 10, 11, 8],
+    edge_align   = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0],
+    corner_perm  = [_, _, _, _, 5, 6, 7, 4],
+    corner_align = [0, 0, 0, 0, 0, 0, 0, 0],
+  )
 
-  def render(self):
-    if self.buffer.tell() != 0:
-      raise ArgumentError("render can only be called once")
+  F = _cube(
+    edge_perm    = [_, _, _, 7, _, _, 3, 11, _, _, _, 6],
+    edge_align   = [0, 0, 0, 1, 0, 0, 0, 1,  0, 0, 0, 0],
+    corner_perm  = [_, _, 3, 7, _, _, 2, 6],
+    corner_align = [0, 0, 2, 1, 0, 0, 1, 2],
+  )
 
-    # B
-    self.buffer.write("            +===+===+===+\n")
-    for i in range(3):
-      self.buffer.write("            |")
-      for j in range(3):
-        self.buffer.write(self.facelet('B', i, j))
-        if j != 2:
-          self.buffer.write(" ")
+  B = _cube(
+    edge_perm    = [_, 5, _, _, 1, 9, _, _, _, 4, _, _],
+    edge_align   = [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+    corner_perm  = [1, 5, _, _, 0, 4, _, _],
+    corner_align = [2, 1, 0, 0, 1, 2, 0, 0],
+  )
 
-      self.buffer.write("|\n")
-      if i != 2:
-        self.buffer.write("            + - + - + - +\n")
-
-    # L U R D
-    self.buffer.write("+===+===+===+===+===+===+===+===+===+===+===+===+\n")
-    for i in range(3):
-      for face in "LURD":
-        self.buffer.write("|")
-        for j in range(3):
-          self.buffer.write(self.facelet(face, i, j))
-          if j != 2:
-            self.buffer.write(' ')
-      self.buffer.write("|\n")
-      if i != 2:
-        self.buffer.write("+---+---+---+---+---+---+---+---+---+---+---+---+\n")
-    self.buffer.write("+===+===+===+===+===+===+===+===+===+===+===+===+\n")
-
-    # F
-    for i in range(3):
-      self.buffer.write("            |")
-      for j in range(3):
-        self.buffer.write(self.facelet('F', i, j))
-        if j != 2:
-          self.buffer.write(" ")
-
-      self.buffer.write("|\n")
-      if i != 2:
-        self.buffer.write("            + - + - + - +\n")
-    self.buffer.write("            +===+===+===+\n")
-    return self.buffer.getvalue()
+  del(_)
