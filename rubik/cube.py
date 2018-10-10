@@ -69,15 +69,24 @@ class Cube(object):
     self.corner_align = [0] * 8
 
   def facelet_color(self, face, facelet):
-    return 0
-
+    facemap = self.FACE_MAP[face]
+    if facelet in [0, 2, 6, 8]:
+      idx, align = facemap[facelet]
+      cubie = self.corner_perm[idx]
+      return self.CORNER_COLORS[cubie][(align + self.corner_align[idx]) % 3]
+    elif facelet in [1, 3, 5, 7]:
+      idx, align = facemap[facelet]
+      cubie = self.edge_perm[idx]
+      return self.EDGE_COLORS[cubie][(align + self.edge_align[idx]) % 2]
+    else:
+      return facemap[facelet]
 
 class Renderer(object):
   def __init__(self, cube):
     self.cube = cube
     self.buffer = StringIO()
 
-  COLORMAP   = [9, 10, 11, 15, 12, 3]
+  COLORMAP   = [9, 10, 15, 12, 11, 3]
   COLORCHARS = "RGWBYO"
 
   def setcolor(self, color):
