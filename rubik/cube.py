@@ -218,3 +218,38 @@ class Rotation(object):
 
   del(_cube)
   del(_)
+
+NOTATION = {
+  "L": Rotation.L,
+  "L2": Rotation.L2,
+  "L'": Rotation.Linv,
+
+  "R": Rotation.R,
+  "R2": Rotation.R2,
+  "R'": Rotation.Rinv,
+
+  "F": Rotation.F,
+  "F2": Rotation.F2,
+  "F'": Rotation.Finv,
+
+  "B": Rotation.B,
+  "B2": Rotation.B2,
+  "B'": Rotation.Binv,
+
+  "U": Rotation.U,
+  "U2": Rotation.U2,
+  "U'": Rotation.Uinv,
+
+  "D": Rotation.D,
+  "D2": Rotation.D2,
+  "D'": Rotation.Dinv,
+}
+
+def algorithm(txt):
+  moves = [NOTATION[move] for move in txt.split()]
+  cube = Cube()
+  for move in moves:
+    cube = cube.apply(move)
+  return cube
+
+# superflip: U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2
