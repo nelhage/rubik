@@ -168,6 +168,8 @@ class Rotation(object):
     corner_perm  = [4, _, _, 0, 7, _, _, 3],
     corner_align = [1, 0, 0, 2, 2, 0, 0, 1],
   )
+  L2 = L.apply(L)
+  Linv = L.invert()
 
   R = _cube(
     edge_perm    = [_, _, 6, _, _, 2, 10, _, _, _, 5, _],
@@ -175,6 +177,8 @@ class Rotation(object):
     corner_perm  = [_, 2, 6, _, _, 1, 5, _],
     corner_align = [0, 2, 1, 0, 0, 1, 2, 0],
   )
+  R2 = R.apply(R)
+  Rinv = R.invert()
 
   U = _cube(
     edge_perm    = [3, 0, 1, 2, _, _, _, _, _, _, _, _],
@@ -182,12 +186,17 @@ class Rotation(object):
     corner_perm  = [3, 0, 1, 2, _, _, _, _],
     corner_align = [0, 0, 0, 0, 0, 0, 0, 0],
   )
+  U2 = U.apply(U)
+  Uinv = U.invert()
+
   D = _cube(
     edge_perm    = [_, _, _, _, _, _, _, _, 9, 10, 11, 8],
     edge_align   = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0],
     corner_perm  = [_, _, _, _, 5, 6, 7, 4],
     corner_align = [0, 0, 0, 0, 0, 0, 0, 0],
   )
+  D2 = D.apply(D)
+  Dinv = D.invert()
 
   F = _cube(
     edge_perm    = [_, _, _, 7, _, _, 3, 11, _, _, _, 6],
@@ -195,6 +204,8 @@ class Rotation(object):
     corner_perm  = [_, _, 3, 7, _, _, 2, 6],
     corner_align = [0, 0, 2, 1, 0, 0, 1, 2],
   )
+  F2 = F.apply(F)
+  Finv = F.invert()
 
   B = _cube(
     edge_perm    = [_, 5, _, _, 1, 9, _, _, _, 4, _, _],
@@ -202,6 +213,8 @@ class Rotation(object):
     corner_perm  = [1, 5, _, _, 0, 4, _, _],
     corner_align = [2, 1, 0, 0, 1, 2, 0, 0],
   )
+  B2 = B.apply(B)
+  Binv = B.invert()
 
   del(_cube)
   del(_)
