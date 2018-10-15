@@ -7,14 +7,6 @@ class Renderer(object):
 
   COLORMAP   = [9, 10, 15, 12, 11, 3]
   COLORCHARS = "RGWBYO"
-  FACE_PERMS = {
-    'L': [6, 3, 0, 7, 4, 1, 8, 5, 2],
-    'R': [2, 5, 8, 1, 4, 7, 0, 3, 6],
-    'F': list(range(9)),
-    'B': [8, 7, 6, 5, 4, 3, 2, 1, 0],
-    'U': list(range(9)),
-    'D': [2, 5, 8, 1, 4, 7, 0, 3, 6],
-  }
 
   def setcolor(self, color):
     if color < 8:
@@ -26,7 +18,7 @@ class Renderer(object):
     return "\x1b[0m"
 
   def facelet(self, face, i, j):
-    color = self.cube.facelet_color(face, self.FACE_PERMS[face][3*i+j])
+    color = self.cube.facelet_color(face, 3*i+j)
     return " " + self.setcolor(self.COLORMAP[color]) + self.COLORCHARS[color] + self.resetcolor() + " "
 
   def render(self):
