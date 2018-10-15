@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++14 -Wall -Werror
+CXXFLAGS = -std=c++14 -Wall -Werror -Wno-unused-parameter
 LINK.o := $(LINK.cc)
 
 rubik.o: rubik.h
