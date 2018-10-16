@@ -55,7 +55,8 @@ Cube Cube::invert() const {
     }
     for (int i = 0; i < 8; ++i) {
         auto idx = out_corners[i] & kCornerPermMask;
-        out_corners[i] |= (3 << kCornerAlignShift) - (corners[idx] & kCornerAlignMask);
+        uint8_t align = (3 - ((corners[idx] & kCornerAlignMask) >> kCornerAlignShift)) % 3;
+        out_corners[i] |= align << kCornerAlignShift;
     }
     return Cube(out_edges, out_corners);
 }
