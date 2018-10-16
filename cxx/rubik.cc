@@ -72,6 +72,7 @@ bool Cube::operator==(const Cube &rhs) const {
 }
 
 void Cube::sanityCheck() const {
+#ifndef NDEBUG
     array<uint8_t, 12> edge_perms;
     edge_perms.fill(0);
     array<uint8_t, 8> corner_perms;
@@ -94,6 +95,7 @@ void Cube::sanityCheck() const {
     for (int i = 0; i < 8; i++) {
         assert(corner_perms[i] == 1);
     }
+#endif
 }
 
 const Cube Rotations::L({4, 1, 2, 3, 8, 5, 6, 0, 7, 9, 10, 11},
