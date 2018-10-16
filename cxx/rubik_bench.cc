@@ -6,7 +6,7 @@
 using namespace rubik;
 using namespace std;
 
-constexpr uint64_t N_ITERATIONS = 1 << 20;
+constexpr uint64_t N_ITERATIONS = 1 << 24;
 
 template<typename T>
 void benchmark(const std::string &name, T body) {

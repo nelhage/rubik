@@ -11,85 +11,88 @@ using namespace std;
 namespace rubik {
 
 Cube::Cube() {
-    iota(edges.begin(), edges.end(), 0);
-    iota(corners.begin(), corners.end(), 0);
+    iota(store.edges.begin(), store.edges.end(), 0);
+    iota(store.corners.begin(), store.corners.end(), 0);
     sanityCheck();
 }
 
-Cube::Cube(array<uint8_t, 12> edges, array<uint8_t, 8> corners)
-        : edges(edges), corners(corners) {
+Cube::Cube(array<uint8_t, 12> edges, array<uint8_t, 8> corners) {
+    store.edges = edges;
+    store.corners = corners;
     sanityCheck();
 }
 
 Cube Cube::apply(const Cube &other) const {
-    array<uint8_t, 12> out_edges;
-    array<uint8_t, 8> out_corners;
+    Cube::storage out;
+
     for (int i = 0; i < 12; i++) {
-        out_edges[i] = edges[other.edges[i] & kEdgePermMask];
-        out_edges[i] ^= other.edges[i] & kEdgeAlignMask;
+        out.edges[i] = store.edges[other.store.edges[i] & kEdgePermMask];
     }
+    out.edge_bits.low  ^= other.store.edge_bits.low  & (0x0101010101010101 * kEdgeAlignMask);
+    out.edge_bits.high ^= other.store.edge_bits.high & (0x0101010101010101 * kEdgeAlignMask);
+
     for (int i = 0; i < 8; i++) {
-        out_corners[i] = corners[other.corners[i] & kCornerPermMask];
-        out_corners[i] += other.corners[i] & kCornerAlignMask;
-        if ((out_corners[i] >> kCornerAlignShift) >= 3) {
-            out_corners[i] -= (3 << kCornerAlignShift);
+        out.corners[i] = store.corners[other.store.corners[i] & kCornerPermMask];
+        out.corners[i] += other.store.corners[i] & kCornerAlignMask;
+        if ((out.corners[i] >> kCornerAlignShift) >= 3) {
+            out.corners[i] -= (3 << kCornerAlignShift);
         }
     }
-    return Cube(out_edges, out_corners);
+    return Cube(out.edges, out.corners);
 }
 
 Cube Cube::invert() const {
-    array<uint8_t, 12> out_edges;
-    array<uint8_t, 8> out_corners;
+    Cube::storage out;
+
     for (int i = 0; i < 12; ++i) {
-        auto idx = edges[i] & kEdgePermMask;
-        out_edges[idx] = i;
+        auto idx = store.edges[i] & kEdgePermMask;
+        out.edges[idx] = i;
     }
     for (int i = 0; i < 12; ++i) {
-        auto idx = out_edges[i] & kEdgePermMask;
-        out_edges[i] ^= edges[idx] & kEdgeAlignMask;
+        auto idx = out.edges[i] & kEdgePermMask;
+        out.edges[i] ^= store.edges[idx] & kEdgeAlignMask;
     }
     for (int i = 0; i < 8; ++i) {
-        auto idx = corners[i] & kCornerPermMask;
-        out_corners[idx] = i;
+        auto idx = store.corners[i] & kCornerPermMask;
+        out.corners[idx] = i;
     }
     for (int i = 0; i < 8; ++i) {
-        auto idx = out_corners[i] & kCornerPermMask;
-        uint8_t align = (3 - ((corners[idx] & kCornerAlignMask) >> kCornerAlignShift)) % 3;
-        out_corners[i] |= align << kCornerAlignShift;
+        auto idx = out.corners[i] & kCornerPermMask;
+        uint8_t align = (3 - ((store.corners[idx] & kCornerAlignMask) >> kCornerAlignShift)) % 3;
+        out.corners[i] |= align << kCornerAlignShift;
     }
-    return Cube(out_edges, out_corners);
+    return Cube(out.edges, out.corners);
 }
 
 bool Cube::operator==(const Cube &rhs) const {
     if (this == &rhs) {
         return true;
     }
-    return edges == rhs.edges && corners == rhs.corners;
+    return store.edges == rhs.store.edges && store.corners == rhs.store.corners;
 }
 
 void Cube::sanityCheck() const {
     array<uint8_t, 12> edge_perms;
+    edge_perms.fill(0);
     array<uint8_t, 8> corner_perms;
+    corner_perms.fill(0);
 
-    for (int i = 0; i < 12; ++i) {
-        assert((edges[i] & ~(kEdgePermMask|kEdgeAlignMask)) == 0);
-        assert((edges[i] & kEdgePermMask) < 12);
-        edge_perms[i] = edges[i] & kEdgePermMask;
+    for (auto e : store.edges) {
+        assert((e & ~(kEdgePermMask|kEdgeAlignMask)) == 0);
+        assert((e & kEdgePermMask) < 12);
+        edge_perms[e & kEdgePermMask]++;
     }
-    for (int i = 0; i < 8; ++i) {
-        assert((corners[i] & ~(kCornerPermMask|kCornerAlignMask)) == 0);
-        assert((corners[i] & kCornerPermMask) < 12);
-        corner_perms[i]  = corners[i] & kCornerPermMask;
+    for (auto c : store.corners) {
+        assert((c & ~(kCornerPermMask|kCornerAlignMask)) == 0);
+        assert((c & kCornerPermMask) < 12);
+        corner_perms[c & kCornerPermMask]++;
     }
 
-    sort(edge_perms.begin(), edge_perms.end());
-    sort(corner_perms.begin(), corner_perms.end());
     for (int i = 0; i < 12; i++) {
-        assert(edge_perms[i] == i);
+        assert(edge_perms[i] == 1);
     }
     for (int i = 0; i < 8; i++) {
-        assert(corner_perms[i] == i);
+        assert(corner_perms[i] == 1);
     }
 }
 

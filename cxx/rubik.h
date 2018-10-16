@@ -14,8 +14,20 @@ class Cube {
     static constexpr uint8_t kCornerAlignMask = 0x30;
     static constexpr uint8_t kCornerAlignShift  = 4;
 
-    std::array<uint8_t, 12> edges;
-    std::array<uint8_t, 8> corners;
+    struct storage {
+        union {
+            std::array<uint8_t, 12> edges;
+            struct {
+                uint64_t low;
+                uint32_t high;
+            } edge_bits;
+        };
+        union {
+            std::array<uint8_t, 8> corners;
+            uint64_t corner_bits;
+        };
+    };
+    storage store;
 
     Cube(std::array<uint8_t, 12> edges, std::array<uint8_t, 8> corners);
 public:
