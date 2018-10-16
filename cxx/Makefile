@@ -5,8 +5,10 @@ all: rubik_test
 
 rubik.o: rubik.h
 rubik_test.o: rubik.h
+rubik_bench.o: rubik.h
 
 rubik_test: rubik_test.o rubik.o
+rubik_bench: rubik_bench.o rubik.o
 
 test: rubik_test
 	./rubik_test
