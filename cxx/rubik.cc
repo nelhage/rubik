@@ -22,14 +22,18 @@ Cube::Cube(array<uint8_t, 12> edges, array<uint8_t, 8> corners) {
     sanityCheck();
 }
 
+constexpr uint64_t broadcast(uint8_t bits) {
+    return bits * 0x0101010101010101;
+}
+
 Cube Cube::apply(const Cube &other) const {
     Cube::storage out;
 
     for (int i = 0; i < 12; i++) {
         out.edges[i] = store.edges[other.store.edges[i] & kEdgePermMask];
     }
-    out.edge_bits.low  ^= other.store.edge_bits.low  & (0x0101010101010101 * kEdgeAlignMask);
-    out.edge_bits.high ^= other.store.edge_bits.high & (0x0101010101010101 * kEdgeAlignMask);
+    out.edge_bits.low  ^= other.store.edge_bits.low  & broadcast(kEdgeAlignMask);
+    out.edge_bits.high ^= other.store.edge_bits.high & broadcast(kEdgeAlignMask);
 
     for (int i = 0; i < 8; i++) {
         out.corners[i] = store.corners[other.store.corners[i] & kCornerPermMask];
