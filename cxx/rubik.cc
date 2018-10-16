@@ -16,9 +16,13 @@ Cube::Cube() {
     sanityCheck();
 }
 
-Cube::Cube(array<uint8_t, 12> edges, array<uint8_t, 8> corners) {
+Cube::Cube(std::array<uint8_t, 12> edges, std::array<uint8_t, 8> corners) {
     store.edges = edges;
     store.corners = corners;
+    sanityCheck();
+}
+
+Cube::Cube(storage store) : store(store) {
     sanityCheck();
 }
 
@@ -37,12 +41,14 @@ Cube Cube::apply(const Cube &other) const {
 
     for (int i = 0; i < 8; i++) {
         out.corners[i] = store.corners[other.store.corners[i] & kCornerPermMask];
-        out.corners[i] += other.store.corners[i] & kCornerAlignMask;
-        if ((out.corners[i] >> kCornerAlignShift) >= 3) {
-            out.corners[i] -= (3 << kCornerAlignShift);
-        }
     }
-    return Cube(out.edges, out.corners);
+
+    out.corner_bits += (other.store.corner_bits & broadcast(kCornerAlignMask));
+    uint64_t overflow = out.corner_bits & broadcast(kCornerAlignMask);
+    overflow &= overflow >> 1;
+    out.corner_bits -= (overflow | (overflow << 1));
+
+    return out;
 }
 
 Cube Cube::invert() const {
@@ -65,7 +71,7 @@ Cube Cube::invert() const {
         uint8_t align = (3 - ((store.corners[idx] & kCornerAlignMask) >> kCornerAlignShift)) % 3;
         out.corners[i] |= align << kCornerAlignShift;
     }
-    return Cube(out.edges, out.corners);
+    return out;
 }
 
 bool Cube::operator==(const Cube &rhs) const {

@@ -30,6 +30,7 @@ class Cube {
     storage store;
 
     Cube(std::array<uint8_t, 12> edges, std::array<uint8_t, 8> corners);
+    Cube(storage store);
 public:
     Cube();
     Cube apply(const Cube &rhs) const;
