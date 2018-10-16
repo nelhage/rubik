@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <array>
+#include <vector>
 
 namespace rubik {
 class Rotations;
@@ -47,8 +48,9 @@ public:
     };
 };
 
+bool search(Cube start, std::vector<Cube> &path, int max_depth);
+
 class Rotations {
-    Rotations();
     static constexpr uint8_t E = Cube::kEdgeAlignMask;
     static constexpr uint8_t C0 = 0 << Cube::kCornerAlignShift;
     static constexpr uint8_t C1 = 1 << Cube::kCornerAlignShift;
@@ -60,6 +62,8 @@ public:
     static const Cube D, D2, Dinv;
     static const Cube F, F2, Finv;
     static const Cube B, B2, Binv;
+
+    Rotations() = delete;
 };
 
 };

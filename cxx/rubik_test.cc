@@ -3,6 +3,7 @@
 #include "rubik.h"
 
 #include <string>
+#include <algorithm>
 
 using namespace rubik;
 using namespace std;
@@ -54,5 +55,35 @@ TEST_CASE("Invert", "[rubik]") {
         CHECK(tc.rot.invert().apply(tc.rot) == Cube());
         CHECK(tc.rot.apply(tc.rot) ==
               tc.rot.invert().apply(tc.rot.invert()));
+    }
+}
+
+TEST_CASE("Search", "[rubik]") {
+    struct {
+        Cube in;
+        int depth;
+        bool ok;
+        vector<Cube> out;
+    } tests[] = {
+        {
+            Rotations::R, 1,
+            true, {Rotations::Rinv},
+        },
+        {
+            Rotations::R.apply(Rotations::U), 1,
+            false, {},
+        },
+        {
+            Rotations::R.apply(Rotations::U), 2,
+            true,
+            {Rotations::Uinv, Rotations::Rinv},
+        },
+    };
+    for (auto &tc: tests) {
+        vector<Cube> path;
+        bool ok = search(tc.in, path, tc.depth);
+        CHECK(ok == tc.ok);
+        CHECK(equal(tc.out.begin(), tc.out.end(),
+                    path.begin(), path.end()));
     }
 }

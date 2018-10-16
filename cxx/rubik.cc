@@ -46,7 +46,7 @@ Cube Cube::apply(const Cube &other) const {
             out.corners[i] -= (3 << kCornerAlignShift);
         }
     }
-    return Cube(out.edges, out.corners);
+    return out;
 }
 
 Cube Cube::invert() const {
@@ -106,6 +106,7 @@ void Cube::sanityCheck() const {
 #endif
 }
 
+
 const Cube Rotations::L({4, 1, 2, 3, 8, 5, 6, 0, 7, 9, 10, 11},
                         {C1|4, C0|1, C0|2, C2|0, C2|7, C0|5, C0|6, C1|3});
 const Cube Rotations::L2(L.apply(L));
@@ -135,5 +136,46 @@ const Cube Rotations::B({0, 5, 2, 3, E|1, 9, 6, 7, 8, E|4, 10, 11},
                         {C2|1, C1|5, C0|2, C0|3, C1|0, C2|4, C0|6, C0|7});
 const Cube Rotations::B2(B.apply(B));
 const Cube Rotations::Binv(B.invert());
+
+namespace {
+vector<Cube> rotations = {
+    Rotations::L,
+    Rotations::Linv,
+    Rotations::R,
+    Rotations::Rinv,
+    Rotations::U,
+    Rotations::Uinv,
+    Rotations::D,
+    Rotations::Dinv,
+    Rotations::F,
+    Rotations::Finv,
+};
+
+bool search_loop(Cube pos,
+                 vector<Cube> &path,
+                 int depth,
+                 int max_depth) {
+    static Cube solved;
+    if (pos == solved) {
+        path.resize(depth);
+        return true;
+    }
+    if (depth >= max_depth) {
+        return false;
+    }
+    for (auto &rot: rotations) {
+        Cube next = pos.apply(rot);
+        if (search_loop(next, path, depth+1, max_depth)) {
+            path[depth] = rot;
+            return true;
+        }
+    }
+    return false;
+}
+};
+
+bool search(Cube start, vector<Cube> &path, int max_depth) {
+    return search_loop(start, path, 0, max_depth);
+}
 
 };
