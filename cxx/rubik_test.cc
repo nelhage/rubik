@@ -31,7 +31,12 @@ TEST_CASE("Rotations", "[rubik]") {
     }
 }
 
-TEST_CASE("Inver", "[rubik]") {
+TEST_CASE("Other rotations", "[rubik]") {
+    Cube cu;
+    cu.apply(Rotations::L).apply(Rotations::F);
+}
+
+TEST_CASE("Invert", "[rubik]") {
     struct {
         string name;
         Cube rot;

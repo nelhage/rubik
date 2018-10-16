@@ -41,14 +41,12 @@ Cube Cube::apply(const Cube &other) const {
 
     for (int i = 0; i < 8; i++) {
         out.corners[i] = store.corners[other.store.corners[i] & kCornerPermMask];
+        out.corners[i] += other.store.corners[i] & kCornerAlignMask;
+        if ((out.corners[i] >> kCornerAlignShift) >= 3) {
+            out.corners[i] -= (3 << kCornerAlignShift);
+        }
     }
-
-    out.corner_bits += (other.store.corner_bits & broadcast(kCornerAlignMask));
-    uint64_t overflow = out.corner_bits & broadcast(kCornerAlignMask);
-    overflow &= overflow >> 1;
-    out.corner_bits -= (overflow | (overflow << 1));
-
-    return out;
+    return Cube(out.edges, out.corners);
 }
 
 Cube Cube::invert() const {
