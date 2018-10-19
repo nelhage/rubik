@@ -15,7 +15,10 @@ rubik_bench: rubik_bench.o rubik.o
 test: rubik_test
 	./rubik_test
 
+bench: rubik_bench
+	./rubik_bench
+
 clean:
 	rm -f $(wildcard *.o) $(EXES)
 
-.PHONY: test clean
+.PHONY: test bench clean
