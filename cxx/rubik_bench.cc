@@ -8,6 +8,33 @@ using namespace std;
 
 constexpr uint64_t N_ITERATIONS = 1 << 24;
 
+template<typename To, typename From>
+bool try_fmt(std::ostream &out, const std::string &unit, From dur) {
+    auto to = chrono::duration_cast<To>(dur);
+    if (to.count() < 10000) {
+        out << to.count() << unit;
+        return true;
+    }
+    return false;
+}
+
+template<typename T>
+void format_duration(std::ostream &out, T dur) {
+    if (try_fmt<chrono::nanoseconds>(out, "ns", dur)) {
+        return;
+    }
+    if (try_fmt<chrono::microseconds>(out, "us", dur)) {
+        return;
+    }
+    if (try_fmt<chrono::milliseconds>(out, "ms", dur)) {
+        return;
+    }
+    if (try_fmt<chrono::seconds>(out, "s", dur)) {
+        return;
+    }
+    out << dur.count() << "<" << T::period::num << "/" << T::period::den << ">\n";
+}
+
 template<typename T>
 void benchmark(const std::string &name, T body, uint64_t N = N_ITERATIONS) {
     auto before = chrono::steady_clock::now();
@@ -15,8 +42,9 @@ void benchmark(const std::string &name, T body, uint64_t N = N_ITERATIONS) {
         body();
     }
     auto after = chrono::steady_clock::now();
-    auto ns = chrono::duration_cast<chrono::nanoseconds>(after - before);
-    cout << name << ": " << (ns/N).count() << "ns/op" << "\n";
+    cout << name << ": ";
+    format_duration(cout, (after - before)/N);
+    cout << "/op" << "\n";
 }
 
 void bench_rotate() {
