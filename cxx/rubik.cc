@@ -191,6 +191,8 @@ vector<Cube> rotations = {
     Rotations::Dinv,
     Rotations::F,
     Rotations::Finv,
+    Rotations::B,
+    Rotations::Binv,
 };
 
 bool search_loop(Cube pos,
