@@ -100,9 +100,6 @@ Cube Cube::invert() const {
 }
 
 bool Cube::operator==(const Cube &rhs) const {
-    if (this == &rhs) {
-        return true;
-    }
     return _mm_test_all_zeros(
             _mm_or_si128(
                     _mm_xor_si128(edges, rhs.edges),
