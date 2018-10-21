@@ -110,6 +110,11 @@ void bench_search() {
                 abort();
             }
         }, 1 << 6);
+    benchmark("search-10", [&]() {
+            if (search(superflip, out, 10)) {
+                abort();
+            }
+        }, 1 << 2);
 }
 
 int main() {
