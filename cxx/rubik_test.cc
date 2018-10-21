@@ -55,7 +55,37 @@ TEST_CASE("Invert", "[rubik]") {
         CHECK(tc.rot.invert().apply(tc.rot) == Cube());
         CHECK(tc.rot.apply(tc.rot) ==
               tc.rot.invert().apply(tc.rot.invert()));
+        auto inv = tc.rot.invert();
+        CHECK(inv.apply(inv).apply(inv) == tc.rot);
     }
+}
+
+Cube superflip() {
+    return Cube().
+        apply(Rotations::U)
+        .apply(Rotations::R2)
+        .apply(Rotations::F)
+        .apply(Rotations::B)
+        .apply(Rotations::R)
+        .apply(Rotations::B2)
+        .apply(Rotations::R)
+        .apply(Rotations::U2)
+        .apply(Rotations::L)
+        .apply(Rotations::B2)
+        .apply(Rotations::R)
+        .apply(Rotations::Uinv)
+        .apply(Rotations::Dinv)
+        .apply(Rotations::R2)
+        .apply(Rotations::F)
+        .apply(Rotations::Rinv)
+        .apply(Rotations::L)
+        .apply(Rotations::B2)
+        .apply(Rotations::U2)
+        .apply(Rotations::F2);
+}
+
+TEST_CASE("Cube::operator==", "[rubik]") {
+    REQUIRE(superflip() != Cube());
 }
 
 TEST_CASE("Search", "[rubik]") {
@@ -78,6 +108,10 @@ TEST_CASE("Search", "[rubik]") {
             true,
             {Rotations::Uinv, Rotations::Rinv},
         },
+        {
+            superflip(), 2,
+            false, {},
+        }
     };
     for (auto &tc: tests) {
         vector<Cube> path;
