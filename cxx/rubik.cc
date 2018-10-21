@@ -195,22 +195,22 @@ vector<Cube> rotations = {
     Rotations::Binv,
 };
 
+Cube solved;
+
 bool search_loop(Cube pos,
                  vector<Cube> &path,
-                 int depth,
-                 int max_depth) {
-    static Cube solved;
+                 int depth) {
     if (pos == solved) {
-        path.resize(depth);
+        path.resize(0);
         return true;
     }
-    if (depth >= max_depth) {
+    if (depth <= 0) {
         return false;
     }
     for (auto &rot: rotations) {
         Cube next = pos.apply(rot);
-        if (search_loop(next, path, depth+1, max_depth)) {
-            path[depth] = rot;
+        if (search_loop(next, path, depth-1)) {
+            path.push_back(rot);
             return true;
         }
     }
@@ -219,7 +219,11 @@ bool search_loop(Cube pos,
 };
 
 bool search(Cube start, vector<Cube> &path, int max_depth) {
-    return search_loop(start, path, 0, max_depth);
+    bool ok = search_loop(start, path, max_depth);
+    if (ok) {
+        reverse(path.begin(), path.end());
+    }
+    return ok;
 }
 
 };
