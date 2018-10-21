@@ -48,9 +48,9 @@ void benchmark(const std::string &name, T body, uint64_t N = N_ITERATIONS) {
 }
 
 void bench_rotate() {
-    Cube cube;
-    benchmark("rotate", [cube]() {
-            cube.apply(cube);
+    Cube cube = Rotations::R;
+    benchmark("rotate", [&]() {
+            cube = cube.apply(Rotations::L);
         });
 }
 
