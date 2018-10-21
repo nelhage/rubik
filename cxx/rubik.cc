@@ -219,6 +219,11 @@ public:
             {Rotations::F, Rotations::Finv},
             {Rotations::B, Rotations::Binv},
         };
+        const vector<pair<const Cube&, const Cube&>> obverse = {
+            {Rotations::L, Rotations::R},
+            {Rotations::U, Rotations::D},
+            {Rotations::F, Rotations::B},
+        };
         for (auto &ent : root) {
             auto fwd = find_if(inverses.begin(),
                                inverses.end(),
@@ -230,6 +235,11 @@ public:
                                [&](auto &pair) {
                                    return pair.second == ent.rotation;
                                });
+            auto ob = find_if(obverse.begin(),
+                              obverse.end(),
+                              [&](auto &pair) {
+                                  return pair.first == ent.rotation;
+                              });
             for (auto &next : root) {
                 // No need to ever search M -> M'
                 if (fwd != inverses.end()
@@ -241,6 +251,22 @@ public:
                 if (inv != inverses.end()
                     && (inv->second == next.rotation || inv->first == next.rotation)) {
                     continue;
+                }
+                // L commutes with R and R';
+                // canonicalize so we always search R -> L or R' -> L
+                // and never L -> R
+                // similarly for U/D and F/B
+                if (ob != obverse.end()) {
+                    auto obinv = find_if(
+                            inverses.begin(),
+                            inverses.end(),
+                            [&](auto &pair) {
+                                return pair.first == ob->first;
+                            });
+                    if (next.rotation == ob->second ||
+                        next.rotation == obinv->second) {
+                        continue;
+                    }
                 }
                 ent.next->push_back(next);
             }
