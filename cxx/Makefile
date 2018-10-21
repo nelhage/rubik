@@ -1,4 +1,4 @@
-override CXXFLAGS += -std=c++14 -Wall -Werror -Wno-unused-parameter
+override CXXFLAGS += -std=c++14 -Wall -Werror -Wno-unused-parameter -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2
 LINK.o := $(LINK.cc)
 
 EXES=rubik_test rubik_bench

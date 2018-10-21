@@ -1,5 +1,9 @@
 #include "rubik.h"
 
+#include <emmintrin.h>
+#include <tmmintrin.h>
+#include <smmintrin.h>
+
 #include <algorithm>
 #include <numeric>
 #include <vector>
@@ -10,52 +14,86 @@ using namespace std;
 
 namespace rubik {
 
-Cube::Cube() {
-    iota(edges.begin(), edges.end(), 0);
-    iota(corners.begin(), corners.end(), 0);
+Cube::Cube() :
+        edges(_mm_set_epi8(0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)),
+        corners(_mm_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0)) {
     sanityCheck();
 }
 
-Cube::Cube(array<uint8_t, 12> edges, array<uint8_t, 8> corners)
+Cube::Cube(__m128i edges, __m128i corners)
         : edges(edges), corners(corners) {
     sanityCheck();
 }
 
+union edge_union {
+    __m128i mm;
+    struct {
+        std::array<uint8_t, 12> arr;
+        uint32_t pad;
+    };
+};
+
+union corner_union {
+    __m128i mm;
+    struct {
+        std::array<uint8_t, 8> arr;
+        uint32_t pad;
+    };
+};
+
+Cube::Cube(std::array<uint8_t, 12> edges,
+           std::array<uint8_t, 8> corners) {
+    edge_union e;
+    e.pad = 0;
+    e.arr = edges;
+    this->edges = e.mm;
+
+    corner_union c;
+    c.pad = 0;
+    c.arr = corners;
+    this->corners = c.mm;
+}
+
+
 Cube Cube::apply(const Cube &other) const {
-    array<uint8_t, 12> out_edges;
-    array<uint8_t, 8> out_corners;
-    for (int i = 0; i < 12; i++) {
-        out_edges[i] = edges[other.edges[i] & kEdgePermMask];
-        out_edges[i] ^= other.edges[i] & kEdgeAlignMask;
-    }
-    for (int i = 0; i < 8; i++) {
-        out_corners[i] = corners[other.corners[i] & kCornerPermMask];
-        out_corners[i] += other.corners[i] & kCornerAlignMask;
-        if ((out_corners[i] >> kCornerAlignShift) >= 3) {
-            out_corners[i] -= (3 << kCornerAlignShift);
-        }
-    }
+    auto edge_perm = _mm_and_si128(other.edges, _mm_set1_epi8(kEdgePermMask));
+    auto out_edges = _mm_shuffle_epi8(edges, edge_perm);
+    out_edges = _mm_xor_si128(out_edges, _mm_and_si128(other.edges, _mm_set1_epi8(kEdgeAlignMask)));
+
+    auto corner_perm = _mm_and_si128(other.corners, _mm_set1_epi8(kCornerPermMask));
+    auto out_corners = _mm_shuffle_epi8(corners, corner_perm);
+    out_corners = _mm_add_epi8(out_corners,
+                               _mm_and_si128(other.corners, _mm_set1_epi8(kCornerAlignMask)));
+    auto lim = _mm_set1_epi8(3 << kCornerAlignShift);
+    auto mask = _mm_cmplt_epi8(out_corners, lim);
+    out_corners = _mm_sub_epi8(out_corners, _mm_andnot_si128(mask, lim));
     return Cube(out_edges, out_corners);
 }
 
 Cube Cube::invert() const {
     array<uint8_t, 12> out_edges;
     array<uint8_t, 8> out_corners;
+
+    edge_union eu;
+    corner_union cu;
+    eu.mm = edges;
+    cu.mm = corners;
+
     for (int i = 0; i < 12; ++i) {
-        auto idx = edges[i] & kEdgePermMask;
+        auto idx = eu.arr[i] & kEdgePermMask;
         out_edges[idx] = i;
     }
     for (int i = 0; i < 12; ++i) {
         auto idx = out_edges[i] & kEdgePermMask;
-        out_edges[i] ^= edges[idx] & kEdgeAlignMask;
+        out_edges[i] ^= eu.arr[idx] & kEdgeAlignMask;
     }
     for (int i = 0; i < 8; ++i) {
-        auto idx = corners[i] & kCornerPermMask;
+        auto idx = cu.arr[i] & kCornerPermMask;
         out_corners[idx] = i;
     }
     for (int i = 0; i < 8; ++i) {
         auto idx = out_corners[i] & kCornerPermMask;
-        uint8_t align = (3 - ((corners[idx] & kCornerAlignMask) >> kCornerAlignShift)) % 3;
+        uint8_t align = (3 - ((cu.arr[idx] & kCornerAlignMask) >> kCornerAlignShift)) % 3;
         out_corners[i] |= align << kCornerAlignShift;
     }
     return Cube(out_edges, out_corners);
@@ -65,22 +103,37 @@ bool Cube::operator==(const Cube &rhs) const {
     if (this == &rhs) {
         return true;
     }
-    return edges == rhs.edges && corners == rhs.corners;
+    return _mm_test_all_zeros(
+            _mm_or_si128(
+                    _mm_xor_si128(edges, rhs.edges),
+                    _mm_and_si128(
+                            _mm_set_epi32(0, 0, 0xffffffff, 0xffffffff),
+                            _mm_xor_si128(corners, rhs.corners))),
+            _mm_set_epi32(0, 0xffffffff, 0xffffffff, 0xffffffff));
 }
 
 void Cube::sanityCheck() const {
 #ifndef NDEBUG
+    edge_union eu;
+    corner_union cu;
+
+    eu.mm = edges;
+    cu.mm = corners;
+
+    /* assert(eu.pad == 0);
+       assert(cu.pad == 0); */
+
     array<uint8_t, 12> edge_perms;
     edge_perms.fill(0);
     array<uint8_t, 8> corner_perms;
     corner_perms.fill(0);
 
-    for (auto e : edges) {
+    for (auto e : eu.arr) {
         assert((e & ~(kEdgePermMask|kEdgeAlignMask)) == 0);
         assert((e & kEdgePermMask) < 12);
         edge_perms[e & kEdgePermMask]++;
     }
-    for (auto c : corners) {
+    for (auto c : cu.arr) {
         assert((c & ~(kCornerPermMask|kCornerAlignMask)) == 0);
         assert((c & kCornerPermMask) < 12);
         corner_perms[c & kCornerPermMask]++;

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <emmintrin.h>
 #include <array>
 #include <vector>
 
@@ -15,10 +16,12 @@ class Cube {
     static constexpr uint8_t kCornerAlignMask = 0x30;
     static constexpr uint8_t kCornerAlignShift  = 4;
 
-    std::array<uint8_t, 12> edges;
-    std::array<uint8_t, 8> corners;
+    __m128i edges;
+    __m128i corners;
 
-    Cube(std::array<uint8_t, 12> edges, std::array<uint8_t, 8> corners);
+    Cube(__m128i edges, __m128i corners);
+    Cube(std::array<uint8_t, 12> edges,
+         std::array<uint8_t, 8> corners);
 public:
     Cube();
     Cube apply(const Cube &rhs) const;
