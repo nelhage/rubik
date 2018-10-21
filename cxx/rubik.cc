@@ -253,14 +253,14 @@ Cube solved;
 
 class SearchImpl {
 public:
-    static int min_depth(Cube &pos) {
+    static int min_depth(const Cube &pos) {
         auto mask = _mm_cmpeq_epi8(pos.edges, solved.edges);
         int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
         assert(inplace >= 0 && inplace <= 12);
         return (12 - inplace + 3) / 4;
     }
 
-    static bool search_loop(Cube pos,
+    static bool search_loop(const Cube &pos,
                             vector<search_tree::rot> &moves,
                             vector<Cube> &path,
                             int depth) {
