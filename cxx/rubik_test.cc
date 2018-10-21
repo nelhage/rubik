@@ -111,6 +111,15 @@ TEST_CASE("Search", "[rubik]") {
         {
             superflip(), 2,
             false, {},
+        },
+        {
+            Rotations::R.apply(Rotations::Uinv).apply(Rotations::B), 4,
+            true,
+            {
+                Rotations::Binv,
+                Rotations::U,
+                Rotations::Rinv,
+            },
         }
     };
     for (auto &tc: tests) {

@@ -5,9 +5,11 @@
 
 namespace rubik {
 class Rotations;
+class SearchImpl;
 
 class Cube {
     friend class Rotations;
+    friend class SearchImpl;
 
     static constexpr uint8_t kEdgePermMask    = 0x0f;
     static constexpr uint8_t kEdgeAlignMask   = 0x10;

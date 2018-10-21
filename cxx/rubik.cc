@@ -196,30 +196,43 @@ vector<Cube> rotations = {
 };
 
 Cube solved;
+};
 
-bool search_loop(Cube pos,
-                 vector<Cube> &path,
-                 int depth) {
-    if (pos == solved) {
-        path.resize(0);
-        return true;
+class SearchImpl {
+public:
+    static int min_depth(Cube &pos) {
+        auto mask = _mm_cmpeq_epi8(pos.edges, solved.edges);
+        int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
+        assert(inplace >= 0 && inplace <= 12);
+        return (12 - inplace + 3) / 4;
     }
-    if (depth <= 0) {
-        return false;
-    }
-    for (auto &rot: rotations) {
-        Cube next = pos.apply(rot);
-        if (search_loop(next, path, depth-1)) {
-            path.push_back(rot);
+
+    static bool search_loop(Cube pos,
+                            vector<Cube> &path,
+                            int depth) {
+        if (pos == solved) {
+            path.resize(0);
             return true;
         }
+        if (depth <= 0) {
+            return false;
+        }
+        if (depth < min_depth(pos)) {
+            return false;
+        }
+        for (auto &rot: rotations) {
+            Cube next = pos.apply(rot);
+            if (search_loop(next, path, depth-1)) {
+                path.push_back(rot);
+                return true;
+            }
+        }
+        return false;
     }
-    return false;
-}
 };
 
 bool search(Cube start, vector<Cube> &path, int max_depth) {
-    bool ok = search_loop(start, path, max_depth);
+    bool ok = SearchImpl::search_loop(start, path, max_depth);
     if (ok) {
         reverse(path.begin(), path.end());
     }
