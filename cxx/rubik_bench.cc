@@ -109,7 +109,7 @@ void bench_search() {
             if (search(superflip, out, 8)) {
                 abort();
             }
-        }, 1);
+        }, 1 << 6);
 }
 
 int main() {
