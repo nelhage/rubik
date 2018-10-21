@@ -180,20 +180,73 @@ const Cube Rotations::B2(B.apply(B));
 const Cube Rotations::Binv(B.invert());
 
 namespace {
-vector<Cube> rotations = {
-    Rotations::L,
-    Rotations::Linv,
-    Rotations::R,
-    Rotations::Rinv,
-    Rotations::U,
-    Rotations::Uinv,
-    Rotations::D,
-    Rotations::Dinv,
-    Rotations::F,
-    Rotations::Finv,
-    Rotations::B,
-    Rotations::Binv,
-};
+
+class search_tree {
+public:
+    struct rot {
+        const Cube &rotation;
+        vector<rot> *next;
+    };
+
+    vector<rot> root,
+        l, linv,
+        r, rinv,
+        u, uinv,
+        d, dinv,
+        f, finv,
+        b, binv;
+
+    search_tree()
+            : root({
+               rot {Rotations::L, &l},
+               rot {Rotations::Linv, &linv},
+               rot {Rotations::R, &r},
+               rot {Rotations::Rinv, &rinv},
+               rot {Rotations::U, &u},
+               rot {Rotations::Uinv, &uinv},
+               rot {Rotations::D, &d},
+               rot {Rotations::Dinv, &dinv},
+               rot {Rotations::F, &f},
+               rot {Rotations::Finv, &finv},
+               rot {Rotations::B, &b},
+               rot {Rotations::Binv, &binv}})
+    {
+        const vector<pair<const Cube&, const Cube&>> inverses = {
+            {Rotations::L, Rotations::Linv},
+            {Rotations::R, Rotations::Rinv},
+            {Rotations::U, Rotations::Uinv},
+            {Rotations::D, Rotations::Dinv},
+            {Rotations::F, Rotations::Finv},
+            {Rotations::B, Rotations::Binv},
+        };
+        for (auto &ent : root) {
+            auto fwd = find_if(inverses.begin(),
+                               inverses.end(),
+                               [&](auto &pair) {
+                                   return pair.first == ent.rotation;
+                               });
+            auto inv = find_if(inverses.begin(),
+                               inverses.end(),
+                               [&](auto &pair) {
+                                   return pair.second == ent.rotation;
+                               });
+            for (auto &next : root) {
+                // No need to ever search M -> M'
+                if (fwd != inverses.end()
+                    && fwd->second == next.rotation) {
+                    continue;
+                }
+                // No need to search M' -> M
+                // No need to search M' -> M'; it's the same as M -> M
+                if (inv != inverses.end()
+                    && (inv->second == next.rotation || inv->first == next.rotation)) {
+                    continue;
+                }
+                ent.next->push_back(next);
+            }
+        }
+    }
+} tree;
 
 Cube solved;
 };
@@ -208,6 +261,7 @@ public:
     }
 
     static bool search_loop(Cube pos,
+                            vector<search_tree::rot> &moves,
                             vector<Cube> &path,
                             int depth) {
         if (pos == solved) {
@@ -220,10 +274,10 @@ public:
         if (depth < min_depth(pos)) {
             return false;
         }
-        for (auto &rot: rotations) {
-            Cube next = pos.apply(rot);
-            if (search_loop(next, path, depth-1)) {
-                path.push_back(rot);
+        for (auto &rot: moves) {
+            Cube next = pos.apply(rot.rotation);
+            if (search_loop(next, *rot.next, path, depth-1)) {
+                path.push_back(rot.rotation);
                 return true;
             }
         }
@@ -232,7 +286,7 @@ public:
 };
 
 bool search(Cube start, vector<Cube> &path, int max_depth) {
-    bool ok = SearchImpl::search_loop(start, path, max_depth);
+    bool ok = SearchImpl::search_loop(start, tree.root, path, max_depth);
     if (ok) {
         reverse(path.begin(), path.end());
     }
