@@ -259,7 +259,7 @@ public:
                             inverses.begin(),
                             inverses.end(),
                             [&](auto &pair) {
-                                return pair.first == ob->first;
+                                return pair.first == ob->second;
                             });
                     if (next.rotation == ob->second ||
                         next.rotation == obinv->second) {

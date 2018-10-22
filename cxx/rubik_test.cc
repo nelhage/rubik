@@ -188,12 +188,12 @@ TEST_CASE("Search", "[rubik]") {
             },
         },
         {
-            "R L", 2,
+            "R L", 4,
             true,
             {Rotations::Linv, Rotations::Rinv},
         },
         {
-            "R2", 2,
+            "R2", 4,
             true,
             {Rotations::R, Rotations::R},
         },
