@@ -235,7 +235,8 @@ public:
             auto ob = find_if(obverse.begin(),
                               obverse.end(),
                               [&](auto &pair) {
-                                  return pair.first == ent.rotation;
+                                  return (pair.first == ent.rotation ||
+                                          pair.first == ent.rotation.invert());
                               });
             for (auto &next : root) {
                 // No need to ever search M -> M'
@@ -249,7 +250,7 @@ public:
                     && (inv->second == next.rotation || inv->first == next.rotation)) {
                     continue;
                 }
-                // L commutes with R and R';
+                // L and L' commute with R and R';
                 // canonicalize so we always search R -> L or R' -> L
                 // and never L -> R
                 // similarly for U/D and F/B

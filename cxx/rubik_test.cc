@@ -2,7 +2,10 @@
 
 #include "rubik.h"
 
+#include <iostream>
+#include <sstream>
 #include <string>
+#include <vector>
 #include <algorithm>
 
 using namespace rubik;
@@ -88,44 +91,120 @@ TEST_CASE("Cube::operator==", "[rubik]") {
     REQUIRE(superflip() != Cube());
 }
 
+vector<pair<string, const Cube&>> moves = {
+    {"R", Rotations::R},
+    {"R'", Rotations::Rinv},
+    {"R2", Rotations::R2},
+    {"L", Rotations::L},
+    {"L'", Rotations::Linv},
+    {"L2", Rotations::L2},
+    {"F", Rotations::F},
+    {"F'", Rotations::Finv},
+    {"F2", Rotations::F2},
+    {"B", Rotations::B},
+    {"B'", Rotations::Binv},
+    {"B2", Rotations::B2},
+    {"U", Rotations::U},
+    {"U'", Rotations::Uinv},
+    {"U2", Rotations::U2},
+    {"D", Rotations::D},
+    {"D'", Rotations::Dinv},
+    {"D2", Rotations::D2},
+};
+
+Cube from_algorithm(const string &str) {
+    Cube out;
+    auto it = str.begin();
+    while (it != str.end()) {
+        auto next = find(it, str.end(), ' ');
+        string word(it, next);
+        auto fnd = find_if(moves.begin(),
+                           moves.end(),
+                           [&](auto &ent) {
+                               return ent.first == word;
+                           });
+        if (fnd == moves.end()) {
+            cerr << "unknown move: " << word << "\n";
+            abort();
+        }
+        out = out.apply(fnd->second);
+        it = next;
+        while (it != str.end() && *it == ' ') {
+            ++it;
+        }
+    }
+    return out;
+}
+
+string to_algorithm(const vector<Cube> &path) {
+    stringstream out;
+    for (auto &cube : path) {
+        auto fnd = find_if(moves.begin(),
+                           moves.end(),
+                           [&](auto &ent) {
+                               return ent.second == cube;
+                           });
+        assert(fnd != moves.end());
+        if (&cube != &path.front()) {
+            out << ' ';
+        }
+        out << fnd->first;
+    }
+    return out.str();
+}
+
+
 TEST_CASE("Search", "[rubik]") {
     struct {
-        Cube in;
+        string in;
         int depth;
         bool ok;
         vector<Cube> out;
     } tests[] = {
         {
-            Rotations::R, 1,
+            "R", 1,
             true, {Rotations::Rinv},
         },
         {
-            Rotations::R.apply(Rotations::U), 1,
+            "R U", 1,
             false, {},
         },
         {
-            Rotations::R.apply(Rotations::U), 2,
+            "R U", 2,
             true,
             {Rotations::Uinv, Rotations::Rinv},
         },
         {
-            superflip(), 2,
+            "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2", 4,
             false, {},
         },
         {
-            Rotations::R.apply(Rotations::Uinv).apply(Rotations::B), 4,
+            "R U' B", 4,
             true,
             {
                 Rotations::Binv,
                 Rotations::U,
                 Rotations::Rinv,
             },
-        }
+        },
+        {
+            "R L", 2,
+            true,
+            {Rotations::Linv, Rotations::Rinv},
+        },
+        {
+            "R2", 2,
+            true,
+            {Rotations::R, Rotations::R},
+        },
     };
     for (auto &tc: tests) {
+        INFO("search(\"" << tc.in << "\", " << tc.depth << ")");
         vector<Cube> path;
-        bool ok = search(tc.in, path, tc.depth);
+        Cube in = from_algorithm(tc.in);
+        bool ok = search(in, path, tc.depth);
         CHECK(ok == tc.ok);
+        INFO("-> " << to_algorithm(path));
         CHECK(equal(tc.out.begin(), tc.out.end(),
                     path.begin(), path.end()));
     }
