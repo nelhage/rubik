@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <algorithm>
 
 #include "rubik.h"
 
@@ -121,5 +122,14 @@ int main() {
     bench_rotate();
     bench_invert();
     bench_search();
+
+    vector<int> heuristic;
+    rubik::search_heuristic(heuristic, 7);
+    cout << "heuristic = [";
+    reverse(heuristic.begin(), heuristic.end());
+    for (auto i : heuristic) {
+        cout << i << " ";
+    }
+    cout << "]\n";
     return 0;
 }
