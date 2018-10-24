@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
+#include <iostream>
 
 #include <cassert>
 
@@ -299,7 +300,7 @@ public:
     }
 
     template <typename Check, typename Prune, typename Unwind>
-    static bool search_loop(const Cube &pos,
+    static bool search(const Cube &pos,
                             vector<search_tree::rot> &moves,
                             int depth,
                             const Check &check, const Prune &prune, const Unwind &unwind) {
@@ -314,12 +315,26 @@ public:
         }
         for (auto &rot: moves) {
             Cube next = pos.apply(rot.rotation);
-            if (search_loop(next, *rot.next, depth-1, check, prune, unwind)) {
+            if (search(next, *rot.next, depth-1, check, prune, unwind)) {
                 unwind(depth, rot.rotation);
                 return true;
             }
         }
         return false;
+    }
+
+    template <typename Visit>
+    static void search(const Cube &pos,
+                            vector<search_tree::rot> &moves,
+                            int depth,
+                            const Visit &visit) {
+        search(pos, moves, depth,
+               [&](const Cube &pos, int depth) {
+                   visit(pos, depth);
+                   return false;
+               },
+               [&](const Cube&, int) { return false; },
+               [&](int, const Cube&) {});
     }
 
     static int heuristic(const Cube &pos) {
@@ -329,7 +344,7 @@ public:
 
 bool search(Cube start, vector<Cube> &path, int max_depth) {
     path.resize(0);
-    bool ok = SearchImpl::search_loop(
+    bool ok = SearchImpl::search(
             start, tree.root, max_depth,
             [&](const Cube &pos, int) {
                 return (pos == solved);
@@ -346,21 +361,31 @@ bool search(Cube start, vector<Cube> &path, int max_depth) {
     return ok;
 }
 
-void search_heuristic(std::vector<int> &out, int max_depth) {
-    out.resize(max_depth+1);
-    SearchImpl::search_loop(
+void search_heuristic(int max_depth) {
+    vector<int> heuristic(max_depth + 1, 0);
+
+    SearchImpl::search(
             Cube(), tree.root, max_depth,
             [&](const Cube &pos, int depth) {
                 int h = SearchImpl::heuristic(pos);
-                if (out[depth] < h) {
-                    out[depth] = h;
+                if (heuristic[depth] < h) {
+                    heuristic[depth] = h;
                 }
-                return false;
-            },
-            [&](const Cube &, int){return false;},
-            [&](int, const Cube&) {
-                abort();
             });
+
+    cout << "heuristic = [";
+    bool first = true;
+    reverse(heuristic.begin(), heuristic.end());
+    for (auto i : heuristic) {
+        if (first) {
+            first = false;
+        } else {
+            cout << ' ';
+        }
+        cout << i;
+    }
+    cout << "]\n";
+
 }
 
 };
