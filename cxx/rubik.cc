@@ -7,7 +7,9 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
+
 #include <iostream>
+#include <iomanip>
 
 #include <cassert>
 
@@ -283,7 +285,12 @@ public:
         int flipped = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
         assert(flipped >= 0 && flipped <= 12);
         static const int depths[13] = {
-            0, 1, 1, 1, 1, 2, 2, 3, 3, 5, 5, 6, 6,
+            0,
+            1, 1, 1, 1,
+            2, 2,
+            3, 3,
+            5, 5,
+            6, 6,
         };
         return depths[flipped];
     }
@@ -291,8 +298,15 @@ public:
     static int edge_heuristic(const Cube &pos) {
         auto mask = _mm_cmpeq_epi8(pos.edges, solved.edges);
         int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
-        assert(inplace >= 0 && inplace <= 12);
-        return (12 - inplace + 3) / 4;
+        int missing = 12 - inplace;
+        static const int lookup[13] = {
+            0,
+            1, 1, 1, 1,
+            2, 2, 2, 2,
+            3, 3,
+            4, 4,
+        };
+        return lookup[missing];
     }
 
     static int min_depth(const Cube &pos) {
@@ -338,7 +352,17 @@ public:
     }
 
     static int heuristic(const Cube &pos) {
-        return flip_heuristic(pos);
+        auto mask = _mm_cmpeq_epi8(pos.edges, solved.edges);
+        int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
+        int missing = 12 - inplace;
+        static const int lookup[13] = {
+            0,
+            1, 1, 1, 1,
+            2, 2, 2, 2,
+            3, 3,
+            4, 4,
+        };
+        return lookup[missing];
     }
 };
 
@@ -362,30 +386,42 @@ bool search(Cube start, vector<Cube> &path, int max_depth) {
 }
 
 void search_heuristic(int max_depth) {
-    vector<int> heuristic(max_depth + 1, 0);
+    vector<vector<int>> heuristic(max_depth + 1);
+    for (auto &v : heuristic) {
+        v.resize(13, 0);
+    }
 
     SearchImpl::search(
             Cube(), tree.root, max_depth,
             [&](const Cube &pos, int depth) {
                 int h = SearchImpl::heuristic(pos);
-                if (heuristic[depth] < h) {
-                    heuristic[depth] = h;
-                }
+                ++heuristic[depth][h];
             });
 
-    cout << "heuristic = [";
-    bool first = true;
+    cout << "heuristic:\n";
     reverse(heuristic.begin(), heuristic.end());
-    for (auto i : heuristic) {
-        if (first) {
-            first = false;
-        } else {
-            cout << ' ';
-        }
-        cout << i;
-    }
-    cout << "]\n";
 
+    int i = -1;
+    for (auto &depth : heuristic) {
+        cout << "d=" << (++i) << ": [";
+
+        uint64_t sum = 0, count = 0;
+        int idx = 0;
+
+        bool first = true;
+        for (auto e : depth) {
+            if (first) {
+                first = false;
+            } else {
+                cout << ' ';
+            }
+            cout << setw(8) << e;
+            sum += idx*e;
+            count += e;
+            ++idx;
+        }
+        cout << "] n=" << count << " avg=" << ((double)sum)/count << "\n";
+    }
 }
 
 };
