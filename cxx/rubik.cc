@@ -424,4 +424,66 @@ void search_heuristic(int max_depth) {
     }
 }
 
+vector<pair<string, const Cube&>> moves = {
+    {"R", Rotations::R},
+    {"R'", Rotations::Rinv},
+    {"R2", Rotations::R2},
+    {"L", Rotations::L},
+    {"L'", Rotations::Linv},
+    {"L2", Rotations::L2},
+    {"F", Rotations::F},
+    {"F'", Rotations::Finv},
+    {"F2", Rotations::F2},
+    {"B", Rotations::B},
+    {"B'", Rotations::Binv},
+    {"B2", Rotations::B2},
+    {"U", Rotations::U},
+    {"U'", Rotations::Uinv},
+    {"U2", Rotations::U2},
+    {"D", Rotations::D},
+    {"D'", Rotations::Dinv},
+    {"D2", Rotations::D2},
+};
+
+Cube from_algorithm(const string &str) {
+    Cube out;
+    auto it = str.begin();
+    while (it != str.end()) {
+        auto next = find(it, str.end(), ' ');
+        string word(it, next);
+        auto fnd = find_if(moves.begin(),
+                           moves.end(),
+                           [&](auto &ent) {
+                               return ent.first == word;
+                           });
+        if (fnd == moves.end()) {
+            cerr << "unknown move: " << word << "\n";
+            abort();
+        }
+        out = out.apply(fnd->second);
+        it = next;
+        while (it != str.end() && *it == ' ') {
+            ++it;
+        }
+    }
+    return out;
+}
+
+string to_algorithm(const vector<Cube> &path) {
+    stringstream out;
+    for (auto &cube : path) {
+        auto fnd = find_if(moves.begin(),
+                           moves.end(),
+                           [&](auto &ent) {
+                               return ent.second == cube;
+                           });
+        assert(fnd != moves.end());
+        if (&cube != &path.front()) {
+            out << ' ';
+        }
+        out << fnd->first;
+    }
+    return out.str();
+}
+
 };

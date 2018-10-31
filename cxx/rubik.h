@@ -43,6 +43,9 @@ public:
 bool search(Cube start, std::vector<Cube> &path, int max_depth);
 void search_heuristic(int max_depth);
 
+Cube from_algorithm(const std::string &str);
+std::string to_algorithm(const std::vector<Cube> &path);
+
 class Rotations {
     static constexpr uint8_t E = Cube::kEdgeAlignMask;
     static constexpr uint8_t C0 = 0 << Cube::kCornerAlignShift;
