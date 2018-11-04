@@ -9,7 +9,6 @@ class SearchImpl;
 
 class Cube {
     friend class Rotations;
-    friend class SearchImpl;
 
     static constexpr uint8_t kEdgePermMask    = 0x0f;
     static constexpr uint8_t kEdgeAlignMask   = 0x10;
@@ -38,6 +37,14 @@ public:
     bool operator!=(const Cube &other) const {
         return !(*this == other);
     };
+
+    const __m128i &getEdges() const {
+        return edges;
+    }
+
+    const __m128i &getCorners() const {
+        return corners;
+    }
 };
 
 bool search(Cube start, std::vector<Cube> &path, int max_depth);

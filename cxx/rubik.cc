@@ -281,7 +281,7 @@ Cube solved;
 class SearchImpl {
 public:
     static int flip_heuristic(const Cube &pos) {
-        auto mask = _mm_slli_epi16(pos.edges, 3);
+        auto mask = _mm_slli_epi16(pos.getEdges(), 3);
         int flipped = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
         assert(flipped >= 0 && flipped <= 12);
         static const int depths[13] = {
@@ -296,7 +296,7 @@ public:
     }
 
     static int edge_heuristic(const Cube &pos) {
-        auto mask = _mm_cmpeq_epi8(pos.edges, solved.edges);
+        auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
         int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
         int missing = 12 - inplace;
         static const int lookup[13] = {
@@ -352,7 +352,7 @@ public:
     }
 
     static int heuristic(const Cube &pos) {
-        auto mask = _mm_cmpeq_epi8(pos.edges, solved.edges);
+        auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
         int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
         int missing = 12 - inplace;
         static const int lookup[13] = {
