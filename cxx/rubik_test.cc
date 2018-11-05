@@ -64,27 +64,8 @@ TEST_CASE("Invert", "[rubik]") {
 }
 
 Cube superflip() {
-    return Cube().
-        apply(Rotations::U)
-        .apply(Rotations::R2)
-        .apply(Rotations::F)
-        .apply(Rotations::B)
-        .apply(Rotations::R)
-        .apply(Rotations::B2)
-        .apply(Rotations::R)
-        .apply(Rotations::U2)
-        .apply(Rotations::L)
-        .apply(Rotations::B2)
-        .apply(Rotations::R)
-        .apply(Rotations::Uinv)
-        .apply(Rotations::Dinv)
-        .apply(Rotations::R2)
-        .apply(Rotations::F)
-        .apply(Rotations::Rinv)
-        .apply(Rotations::L)
-        .apply(Rotations::B2)
-        .apply(Rotations::U2)
-        .apply(Rotations::F2);
+    return rubik::from_algorithm(
+            "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2");
 }
 
 TEST_CASE("Cube::operator==", "[rubik]") {
