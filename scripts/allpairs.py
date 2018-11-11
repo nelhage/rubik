@@ -24,6 +24,8 @@ def adjacency(moves, nperm, nalign):
         for i,j in enumerate(perm):
             for n in range(nalign):
                 adj[coord(n, i)][coord((n+align[i])%nalign, j)] = 1
+    for i in range(dim):
+        adj[i][i] = 0
 
     for k in range(dim):
         adj = np.minimum(adj, adj[np.newaxis,k,:] + adj[:,k,np.newaxis])
@@ -31,11 +33,13 @@ def adjacency(moves, nperm, nalign):
 
 
 print("# edges")
-print(adjacency(
+edges = adjacency(
     [(m.edge_perm, m.edge_align) for m in moves],
-    12, 2))
+    12, 2)
+print("\n".join(','.join(map(str, r)) for r in edges))
 
 print("# corners")
-print(adjacency(
+corners = adjacency(
     [(m.corner_perm, m.corner_align) for m in moves],
-    8, 3))
+    8, 3)
+print("\n".join(','.join(map(str, r)) for r in corners))
