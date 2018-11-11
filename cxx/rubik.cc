@@ -374,7 +374,13 @@ bool search(Cube start, vector<Cube> &path, int max_depth) {
                 return (pos == solved);
             },
             [&](const Cube &pos, int depth) {
-                return depth < SearchImpl::min_depth(pos);
+                auto edge = SearchImpl::edge_heuristic(pos);
+                if (depth < edge)
+                    return true;
+                auto flip = SearchImpl::flip_heuristic(pos);
+                if (depth < flip)
+                    return true;
+                return false;
             },
             [&](int depth, const Cube &rot) {
                 path.push_back(rot);
