@@ -276,108 +276,105 @@ public:
 } tree;
 
 Cube solved;
-};
 
-class SearchImpl {
-public:
-    static int flip_heuristic(const Cube &pos) {
-        auto mask = _mm_slli_epi16(pos.getEdges(), 3);
-        int flipped = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
-        assert(flipped >= 0 && flipped <= 12);
-        static const int depths[13] = {
-            0,
-            1, 1, 1, 1,
-            2, 2,
-            3, 3,
-            5, 5,
-            6, 6,
-        };
-        return depths[flipped];
+int flip_heuristic(const Cube &pos) {
+    auto mask = _mm_slli_epi16(pos.getEdges(), 3);
+    int flipped = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
+    assert(flipped >= 0 && flipped <= 12);
+    static const int depths[13] = {
+        0,
+        1, 1, 1, 1,
+        2, 2,
+        3, 3,
+        5, 5,
+        6, 6,
+    };
+    return depths[flipped];
+}
+
+int edge_heuristic(const Cube &pos) {
+    auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
+    int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
+    int missing = 12 - inplace;
+    static const int lookup[13] = {
+        0,
+        1, 1, 1, 1,
+        2, 2, 2, 2,
+        3, 3,
+        4, 4,
+    };
+    return lookup[missing];
+}
+
+int min_depth(const Cube &pos) {
+    return max(flip_heuristic(pos), edge_heuristic(pos));
+}
+
+template <typename Check, typename Prune, typename Unwind>
+bool search(const Cube &pos,
+            vector<search_tree::rot> &moves,
+            int depth,
+            const Check &check, const Prune &prune, const Unwind &unwind) {
+    if (check(pos, depth)) {
+        return true;
     }
-
-    static int edge_heuristic(const Cube &pos) {
-        auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
-        int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
-        int missing = 12 - inplace;
-        static const int lookup[13] = {
-            0,
-            1, 1, 1, 1,
-            2, 2, 2, 2,
-            3, 3,
-            4, 4,
-        };
-        return lookup[missing];
-    }
-
-    static int min_depth(const Cube &pos) {
-        return max(flip_heuristic(pos), edge_heuristic(pos));
-    }
-
-    template <typename Check, typename Prune, typename Unwind>
-    static bool search(const Cube &pos,
-                            vector<search_tree::rot> &moves,
-                            int depth,
-                            const Check &check, const Prune &prune, const Unwind &unwind) {
-        if (check(pos, depth)) {
-            return true;
-        }
-        if (depth <= 0) {
-            return false;
-        }
-        if (prune(pos, depth)) {
-            return false;
-        }
-        for (auto &rot: moves) {
-            Cube next = pos.apply(rot.rotation);
-            if (search(next, *rot.next, depth-1, check, prune, unwind)) {
-                unwind(depth, rot.rotation);
-                return true;
-            }
-        }
+    if (depth <= 0) {
         return false;
     }
-
-    template <typename Visit>
-    static void search(const Cube &pos,
-                            vector<search_tree::rot> &moves,
-                            int depth,
-                            const Visit &visit) {
-        search(pos, moves, depth,
-               [&](const Cube &pos, int depth) {
-                   visit(pos, depth);
-                   return false;
-               },
-               [&](const Cube&, int) { return false; },
-               [&](int, const Cube&) {});
+    if (prune(pos, depth)) {
+        return false;
     }
-
-    static int heuristic(const Cube &pos) {
-        auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
-        int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
-        int missing = 12 - inplace;
-        static const int lookup[13] = {
-            0,
-            1, 1, 1, 1,
-            2, 2, 2, 2,
-            3, 3,
-            4, 4,
-        };
-        return lookup[missing];
+    for (auto &rot: moves) {
+        Cube next = pos.apply(rot.rotation);
+        if (search(next, *rot.next, depth-1, check, prune, unwind)) {
+            unwind(depth, rot.rotation);
+            return true;
+        }
     }
+    return false;
+}
+
+template <typename Visit>
+void search(const Cube &pos,
+            vector<search_tree::rot> &moves,
+            int depth,
+            const Visit &visit) {
+    search(pos, moves, depth,
+           [&](const Cube &pos, int depth) {
+               visit(pos, depth);
+               return false;
+           },
+           [&](const Cube&, int) { return false; },
+           [&](int, const Cube&) {});
+}
+
+int heuristic(const Cube &pos) {
+    auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
+    int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
+    int missing = 12 - inplace;
+    static const int lookup[13] = {
+        0,
+        1, 1, 1, 1,
+        2, 2, 2, 2,
+        3, 3,
+        4, 4,
+    };
+    return lookup[missing];
+}
 };
 
 bool search(Cube start, vector<Cube> &path, int max_depth) {
     path.resize(0);
-    bool ok = SearchImpl::search(
+    bool ok = search(
             start, tree.root, max_depth,
             [&](const Cube &pos, int) {
                 return (pos == solved);
             },
             [&](const Cube &pos, int depth) {
-                auto edge = SearchImpl::edge_heuristic(pos);
+                auto edge = edge_heuristic(pos);
                 if (depth < edge)
                     return true;
-                auto flip = SearchImpl::flip_heuristic(pos);
+                auto flip = flip_heuristic(pos);
                 if (depth < flip)
                     return true;
                 return false;
@@ -392,23 +389,23 @@ bool search(Cube start, vector<Cube> &path, int max_depth) {
 }
 
 void search_heuristic(int max_depth) {
-    vector<vector<int>> heuristic(max_depth + 1);
-    for (auto &v : heuristic) {
+    vector<vector<int>> vals(max_depth + 1);
+    for (auto &v : vals) {
         v.resize(13, 0);
     }
 
-    SearchImpl::search(
+    search(
             Cube(), tree.root, max_depth,
             [&](const Cube &pos, int depth) {
-                int h = SearchImpl::heuristic(pos);
-                ++heuristic[depth][h];
+                int h = heuristic(pos);
+                ++vals[depth][h];
             });
 
     cout << "heuristic:\n";
-    reverse(heuristic.begin(), heuristic.end());
+    reverse(vals.begin(), vals.end());
 
     int i = -1;
-    for (auto &depth : heuristic) {
+    for (auto &depth : vals) {
         cout << "d=" << (++i) << ": [";
 
         uint64_t sum = 0, count = 0;
