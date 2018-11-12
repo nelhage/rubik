@@ -1,3 +1,6 @@
+#ifndef RUBIK_H
+#define RUBIK_H
+
 #include <stdint.h>
 #include <emmintrin.h>
 #include <array>
@@ -70,3 +73,4 @@ public:
 };
 
 };
+#endif

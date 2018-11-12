@@ -1,4 +1,5 @@
 #include "rubik.h"
+#include "rubik_impl.h"
 
 #include <emmintrin.h>
 #include <tmmintrin.h>
@@ -180,100 +181,94 @@ const Cube Rotations::B2(B.apply(B));
 const Cube Rotations::Binv(B.invert());
 
 namespace {
-
-class search_tree {
-public:
-    struct rot {
-        const Cube &rotation;
-        vector<rot> *next;
-    };
-
-    vector<rot> root,
+const std::vector<search_node> *make_ftm_tree() {
+    static std::vector<search_node>
         l, linv,
         r, rinv,
         u, uinv,
         d, dinv,
         f, finv,
         b, binv;
+    static std::vector<search_node>
+        root({{Rotations::L, &l},
+              {Rotations::Linv, &linv},
+              {Rotations::R, &r},
+              {Rotations::Rinv, &rinv},
+              {Rotations::U, &u},
+              {Rotations::Uinv, &uinv},
+              {Rotations::D, &d},
+              {Rotations::Dinv, &dinv},
+              {Rotations::F, &f},
+              {Rotations::Finv, &finv},
+              {Rotations::B, &b},
+              {Rotations::Binv, &binv}});
 
-    search_tree()
-            : root({
-               rot {Rotations::L, &l},
-               rot {Rotations::Linv, &linv},
-               rot {Rotations::R, &r},
-               rot {Rotations::Rinv, &rinv},
-               rot {Rotations::U, &u},
-               rot {Rotations::Uinv, &uinv},
-               rot {Rotations::D, &d},
-               rot {Rotations::Dinv, &dinv},
-               rot {Rotations::F, &f},
-               rot {Rotations::Finv, &finv},
-               rot {Rotations::B, &b},
-               rot {Rotations::Binv, &binv}})
-    {
-        const vector<pair<const Cube&, const Cube&>> inverses = {
-            {Rotations::L, Rotations::Linv},
-            {Rotations::R, Rotations::Rinv},
-            {Rotations::U, Rotations::Uinv},
-            {Rotations::D, Rotations::Dinv},
-            {Rotations::F, Rotations::Finv},
-            {Rotations::B, Rotations::Binv},
-        };
-        const vector<pair<const Cube&, const Cube&>> obverse = {
-            {Rotations::L, Rotations::R},
-            {Rotations::U, Rotations::D},
-            {Rotations::F, Rotations::B},
-        };
-        for (auto &ent : root) {
-            auto fwd = find_if(inverses.begin(),
-                               inverses.end(),
-                               [&](auto &pair) {
-                                   return pair.first == ent.rotation;
-                               });
-            auto inv = find_if(inverses.begin(),
-                               inverses.end(),
-                               [&](auto &pair) {
-                                   return pair.second == ent.rotation;
-                               });
-            auto ob = find_if(obverse.begin(),
-                              obverse.end(),
-                              [&](auto &pair) {
-                                  return (pair.first == ent.rotation ||
-                                          pair.first == ent.rotation.invert());
-                              });
-            for (auto &next : root) {
-                // No need to ever search M -> M'
-                if (fwd != inverses.end()
-                    && fwd->second == next.rotation) {
-                    continue;
-                }
-                // No need to search M' -> M
-                // No need to search M' -> M'; it's the same as M -> M
-                if (inv != inverses.end()
-                    && (inv->second == next.rotation || inv->first == next.rotation)) {
-                    continue;
-                }
-                // L and L' commute with R and R';
-                // canonicalize so we always search R -> L or R' -> L
-                // and never L -> R
-                // similarly for U/D and F/B
-                if (ob != obverse.end()) {
-                    auto obinv = find_if(
-                            inverses.begin(),
-                            inverses.end(),
-                            [&](auto &pair) {
-                                return pair.first == ob->second;
-                            });
-                    if (next.rotation == ob->second ||
-                        next.rotation == obinv->second) {
-                        continue;
-                    }
-                }
-                ent.next->push_back(next);
+    const vector<pair<const Cube&, const Cube&>> inverses = {
+        {Rotations::L, Rotations::Linv},
+        {Rotations::R, Rotations::Rinv},
+        {Rotations::U, Rotations::Uinv},
+        {Rotations::D, Rotations::Dinv},
+        {Rotations::F, Rotations::Finv},
+        {Rotations::B, Rotations::Binv},
+    };
+    const vector<pair<const Cube&, const Cube&>> obverse = {
+        {Rotations::L, Rotations::R},
+        {Rotations::U, Rotations::D},
+        {Rotations::F, Rotations::B},
+    };
+    for (auto &ent : root) {
+        auto fwd = find_if(inverses.begin(),
+                           inverses.end(),
+                           [&](auto &pair) {
+                               return pair.first == ent.rotation;
+                           });
+        auto inv = find_if(inverses.begin(),
+                           inverses.end(),
+                           [&](auto &pair) {
+                               return pair.second == ent.rotation;
+                           });
+        auto ob = find_if(obverse.begin(),
+                          obverse.end(),
+                          [&](auto &pair) {
+                              return (pair.first == ent.rotation ||
+                                      pair.first == ent.rotation.invert());
+                          });
+        for (auto &next : root) {
+            // No need to ever search M -> M'
+            if (fwd != inverses.end()
+                && fwd->second == next.rotation) {
+                continue;
             }
+            // No need to search M' -> M
+            // No need to search M' -> M'; it's the same as M -> M
+            if (inv != inverses.end()
+                && (inv->second == next.rotation || inv->first == next.rotation)) {
+                continue;
+            }
+            // L and L' commute with R and R';
+            // canonicalize so we always search R -> L or R' -> L
+            // and never L -> R
+            // similarly for U/D and F/B
+            if (ob != obverse.end()) {
+                auto obinv = find_if(
+                        inverses.begin(),
+                        inverses.end(),
+                        [&](auto &pair) {
+                            return pair.first == ob->second;
+                        });
+                if (next.rotation == ob->second ||
+                    next.rotation == obinv->second) {
+                    continue;
+                }
+            }
+            ent.next->push_back(next);
         }
     }
-} tree;
+    return &root;
+}
+};
+
+const vector<search_node> *ftm_root = make_ftm_tree();
 
 Cube solved;
 
@@ -312,7 +307,7 @@ int min_depth(const Cube &pos) {
 
 template <typename Check, typename Prune, typename Unwind>
 bool search(const Cube &pos,
-            vector<search_tree::rot> &moves,
+            const vector<search_node> &moves,
             int depth,
             const Check &check, const Prune &prune, const Unwind &unwind) {
     if (check(pos, depth)) {
@@ -336,7 +331,7 @@ bool search(const Cube &pos,
 
 template <typename Visit>
 void search(const Cube &pos,
-            vector<search_tree::rot> &moves,
+            const vector<search_node> &moves,
             int depth,
             const Visit &visit) {
     search(pos, moves, depth,
@@ -361,12 +356,11 @@ int heuristic(const Cube &pos) {
     };
     return lookup[missing];
 }
-};
 
 bool search(Cube start, vector<Cube> &path, int max_depth) {
     path.resize(0);
     bool ok = search(
-            start, tree.root, max_depth,
+            start, *ftm_root, max_depth,
             [&](const Cube &pos, int) {
                 return (pos == solved);
             },
@@ -395,7 +389,7 @@ void search_heuristic(int max_depth) {
     }
 
     search(
-            Cube(), tree.root, max_depth,
+            Cube(), *ftm_root, max_depth,
             [&](const Cube &pos, int depth) {
                 int h = heuristic(pos);
                 ++vals[depth][h];
