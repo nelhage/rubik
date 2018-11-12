@@ -50,8 +50,18 @@ public:
     }
 };
 
+struct search_node;
+template <typename Check, typename Prune, typename Unwind>
+bool search(const Cube &pos,
+            const std::vector<search_node> &moves,
+            int depth,
+            const Check &check, const Prune &prune, const Unwind &unwind);
+template <typename Visit>
+void search(const Cube &pos,
+            const std::vector<search_node> &moves,
+            int depth,
+            const Visit &visit);
 bool search(Cube start, std::vector<Cube> &path, int max_depth);
-void search_heuristic(int max_depth);
 
 Cube from_algorithm(const std::string &str);
 std::string to_algorithm(const std::vector<Cube> &path);
