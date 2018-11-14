@@ -8,7 +8,24 @@
 
 namespace rubik {
 class Rotations;
-class SearchImpl;
+
+enum class Color : char {
+    Red = 'R',
+    White = 'W',
+    Green = 'G',
+    Blue = 'B',
+    Orange = 'O',
+    Yello = 'Y',
+};
+
+enum class Face : char {
+    Up = 'U',
+    Down = 'D',
+    Left = 'L',
+    Right = 'R',
+    Front = 'F',
+    Back = 'B',
+};
 
 class Cube {
     friend class Rotations;

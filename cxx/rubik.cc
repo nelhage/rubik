@@ -9,8 +9,8 @@
 #include <numeric>
 #include <vector>
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 #include <cassert>
 
@@ -301,20 +301,6 @@ int edge_heuristic(const Cube &pos) {
     return lookup[missing];
 }
 
-int heuristic(const Cube &pos) {
-    auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
-    int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
-    int missing = 12 - inplace;
-    static const int lookup[13] = {
-        0,
-        1, 1, 1, 1,
-        2, 2, 2, 2,
-        3, 3,
-        4, 4,
-    };
-    return lookup[missing];
-}
-
 bool search(Cube start, vector<Cube> &path, int max_depth) {
     path.resize(0);
     bool ok = search(
@@ -338,45 +324,6 @@ bool search(Cube start, vector<Cube> &path, int max_depth) {
         reverse(path.begin(), path.end());
     }
     return ok;
-}
-
-void search_heuristic(int max_depth) {
-    vector<vector<int>> vals(max_depth + 1);
-    for (auto &v : vals) {
-        v.resize(13, 0);
-    }
-
-    search(
-            Cube(), *ftm_root, max_depth,
-            [&](const Cube &pos, int depth) {
-                int h = heuristic(pos);
-                ++vals[depth][h];
-            });
-
-    cout << "heuristic:\n";
-    reverse(vals.begin(), vals.end());
-
-    int i = -1;
-    for (auto &depth : vals) {
-        cout << "d=" << (++i) << ": [";
-
-        uint64_t sum = 0, count = 0;
-        int idx = 0;
-
-        bool first = true;
-        for (auto e : depth) {
-            if (first) {
-                first = false;
-            } else {
-                cout << ' ';
-            }
-            cout << setw(8) << e;
-            sum += idx*e;
-            count += e;
-            ++idx;
-        }
-        cout << "] n=" << count << " avg=" << ((double)sum)/count << "\n";
-    }
 }
 
 vector<pair<string, const Cube&>> moves = {

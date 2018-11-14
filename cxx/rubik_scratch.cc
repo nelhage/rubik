@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 
 #include <emmintrin.h>
@@ -40,6 +41,45 @@ int heuristic(const Cube &pos) {
         4, 4,
     };
     return lookup[missing];
+}
+
+void search_heuristic(int max_depth) {
+    vector<vector<int>> vals(max_depth + 1);
+    for (auto &v : vals) {
+        v.resize(13, 0);
+    }
+
+    search(
+            Cube(), *ftm_root, max_depth,
+            [&](const Cube &pos, int depth) {
+                int h = heuristic(pos);
+                ++vals[depth][h];
+            });
+
+    cout << "heuristic:\n";
+    reverse(vals.begin(), vals.end());
+
+    int i = -1;
+    for (auto &depth : vals) {
+        cout << "d=" << (++i) << ": [";
+
+        uint64_t sum = 0, count = 0;
+        int idx = 0;
+
+        bool first = true;
+        for (auto e : depth) {
+            if (first) {
+                first = false;
+            } else {
+                cout << ' ';
+            }
+            cout << setw(8) << e;
+            sum += idx*e;
+            count += e;
+            ++idx;
+        }
+        cout << "] n=" << count << " avg=" << ((double)sum)/count << "\n";
+    }
 }
 
 void search_face() {
