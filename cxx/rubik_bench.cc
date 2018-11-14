@@ -123,6 +123,5 @@ int main() {
     bench_invert();
     bench_search();
 
-    rubik::search_heuristic(7);
     return 0;
 }

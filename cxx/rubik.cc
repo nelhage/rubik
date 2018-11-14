@@ -301,10 +301,6 @@ int edge_heuristic(const Cube &pos) {
     return lookup[missing];
 }
 
-int min_depth(const Cube &pos) {
-    return max(flip_heuristic(pos), edge_heuristic(pos));
-}
-
 int heuristic(const Cube &pos) {
     auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
     int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);

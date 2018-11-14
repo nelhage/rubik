@@ -9,8 +9,9 @@ rubik.o: rubik.h
 rubik_test.o: rubik.h
 rubik_bench.o: rubik.h
 
-rubik_test: rubik_test.o test_main.o rubik.o
-rubik_bench: rubik_bench.o rubik.o
+rubik_test: test_main.o rubik.o
+rubik_bench: rubik.o
+rubik_scratch: rubik.o
 
 test: rubik_test
 	./rubik_test
@@ -18,7 +19,10 @@ test: rubik_test
 bench: rubik_bench
 	./rubik_bench
 
+scratch: rubik_scratch
+	./rubik_scratch
+
 clean:
 	rm -f $(wildcard *.o) $(EXES)
 
-.PHONY: test bench clean
+.PHONY: test bench clean scratch

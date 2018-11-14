@@ -1,3 +1,4 @@
 *.o
 /rubik_test
 /rubik_bench
+/rubik_scratch
