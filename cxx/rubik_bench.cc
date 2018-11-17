@@ -37,15 +37,23 @@ void format_duration(std::ostream &out, T dur) {
 }
 
 template<typename T>
-void benchmark(const std::string &name, T body, uint64_t N = N_ITERATIONS) {
-    auto before = chrono::steady_clock::now();
-    for (uint64_t i = 0; i < N; ++i) {
-        body();
+void benchmark(const std::string &name, T body) {
+    for (uint8_t order = 0; ; ++order) {
+        auto before = chrono::steady_clock::now();
+        uint64_t N = (1ul << order);
+        for (uint64_t i = 0; i < N; ++i) {
+            body();
+        }
+        auto after = chrono::steady_clock::now();
+        if ((after - before) < chrono::seconds(1)) {
+            continue;
+        }
+
+        cout << name << ": ";
+        format_duration(cout, (after - before)/N);
+        cout << "/op [order=" << (int)order << "]" << "\n";
+        break;
     }
-    auto after = chrono::steady_clock::now();
-    cout << name << ": ";
-    format_duration(cout, (after - before)/N);
-    cout << "/op" << "\n";
 }
 
 void bench_rotate() {
@@ -90,32 +98,32 @@ void bench_search() {
             if (search(superflip, out, 1)) {
                 abort();
             }
-        }, 1 << 21);
+        });
     benchmark("search-2", [&]() {
             if (search(superflip, out, 2)) {
                 abort();
             }
-        }, 1 << 18);
+        });
     benchmark("search-3", [&]() {
             if (search(superflip, out, 3)) {
                 abort();
             }
-        }, 1 << 15);
+        });
     benchmark("search-4", [&]() {
             if (search(superflip, out, 4)) {
                 abort();
             }
-        }, 1 << 12);
+        });
     benchmark("search-8", [&]() {
             if (search(superflip, out, 8)) {
                 abort();
             }
-        }, 1 << 6);
+        });
     benchmark("search-10", [&]() {
             if (search(superflip, out, 10)) {
                 abort();
             }
-        }, 1 << 2);
+        });
 }
 
 int main() {
