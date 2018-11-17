@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <assert.h>
 
 #include <emmintrin.h>
 #include <tmmintrin.h>
@@ -9,38 +10,36 @@
 
 #include "rubik.h"
 #include "rubik_impl.h"
+#include "tables.h"
 
 using namespace rubik;
 using namespace std;
 
 static Cube solved;
 
-int edge_heuristic(const Cube &pos) {
-    auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
-    int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
-    int missing = 12 - inplace;
-    static const int lookup[13] = {
-        0,
-        1, 1, 1, 1,
-        2, 2, 2, 2,
-        3, 3,
-        4, 4,
-    };
-    return lookup[missing];
-}
+int face_heuristic(const Cube &pos) {
+    std::array<uint8_t, 12> edge;
+    std::array<uint8_t, 8> corner;
+    rubik::edge_union eu;
+    rubik::corner_union cu;
 
-int heuristic(const Cube &pos) {
-    auto mask = _mm_cmpeq_epi8(pos.getEdges(), solved.getEdges());
-    int inplace = __builtin_popcount(_mm_movemask_epi8(mask) & 0x0fff);
-    int missing = 12 - inplace;
-    static const int lookup[13] = {
-        0,
-        1, 1, 1, 1,
-        2, 2, 2, 2,
-        3, 3,
-        4, 4,
-    };
-    return lookup[missing];
+    eu.mm = pos.getEdges();
+    cu.mm = pos.getCorners();
+    for (uint i = 0; i < eu.arr.size(); ++i) {
+        edge[eu.arr[i] & rubik::Cube::kEdgePermMask]
+            = i | (eu.arr[i] & rubik::Cube::kEdgeAlignMask);
+    }
+    for (uint i = 0; i < cu.arr.size(); ++i) {
+        corner[cu.arr[i] & rubik::Cube::kCornerPermMask]
+            = i | (cu.arr[i] & rubik::Cube::kCornerAlignMask);
+    }
+
+    int h = 0;
+    for (int i = 0; i < 4; i++) {
+        h = max<int>(h, edge_dist[(i << 5) | edge[i]]);
+        h = max<int>(h, corner_dist[(i << 5) | corner[i]]);
+    }
+    return h;
 }
 
 void search_heuristic(int max_depth) {
@@ -52,7 +51,8 @@ void search_heuristic(int max_depth) {
     search(
             Cube(), *ftm_root, max_depth,
             [&](const Cube &pos, int depth) {
-                int h = heuristic(pos);
+                int h = face_heuristic(pos);
+                assert(h <= max_depth - depth);
                 ++vals[depth][h];
             });
 
@@ -82,6 +82,34 @@ void search_heuristic(int max_depth) {
     }
 }
 
+bool face_prune(const Cube &pos, int depth) {
+    std::array<uint8_t, 12> edge;
+    std::array<uint8_t, 8> corner;
+    rubik::edge_union eu;
+    rubik::corner_union cu;
+
+    eu.mm = pos.getEdges();
+    cu.mm = pos.getCorners();
+    for (uint i = 0; i < eu.arr.size(); ++i) {
+        edge[eu.arr[i] & rubik::Cube::kEdgePermMask]
+            = i | (eu.arr[i] & rubik::Cube::kEdgeAlignMask);
+    }
+    for (uint i = 0; i < cu.arr.size(); ++i) {
+        corner[cu.arr[i] & rubik::Cube::kCornerPermMask]
+            = i | (cu.arr[i] & rubik::Cube::kCornerAlignMask);
+    }
+
+    for (int i = 0; i < 4; i++) {
+        if (edge_dist[(i << 5) | edge[i]] > depth) {
+            return true;
+        }
+        if (corner_dist[(i << 5) | corner[i]] > depth) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void search_face() {
     auto superflip = rubik::from_algorithm(
             "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2");
@@ -105,7 +133,7 @@ void search_face() {
                             _mm_set_epi32(0, 0xffffffff, 0xffffffff, 0xffffffff));
                 },
                 [&](const Cube &pos, int depth) {
-                    return false;
+                    return face_prune(pos, depth);
                 },
                 [&](int, const Cube &rot) {
                     path.push_back(rot);
@@ -113,6 +141,7 @@ void search_face() {
         if (!ok) {
             cout << "depth=" << depth << ": no\n";
         } else {
+            reverse(path.begin(), path.end());
             cout << "depth=" << depth << ": yes: "<< to_algorithm(path) << "\n";
             return;
         }
@@ -121,6 +150,7 @@ void search_face() {
 
 int main() {
     search_face();
+    // search_heuristic(6);
 
     return 0;
 }

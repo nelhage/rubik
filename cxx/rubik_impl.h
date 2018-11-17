@@ -63,6 +63,17 @@ void search(const Cube &pos,
            [&](int, const Cube&) {});
 }
 
+int flip_heuristic(const Cube &pos);
+int edge_heuristic(const Cube &pos);
+
+constexpr bool debug_mode =
+#ifdef NDEBUG
+    0
+#else
+    1
+#endif
+    ;
+
 };
 
 #endif

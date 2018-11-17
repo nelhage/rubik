@@ -98,7 +98,10 @@ bool Cube::operator==(const Cube &rhs) const {
 }
 
 void Cube::sanityCheck() const {
-#ifndef NDEBUG
+    if (debug_mode) {
+        return;
+    }
+
     edge_union eu;
     corner_union cu;
 
@@ -130,7 +133,6 @@ void Cube::sanityCheck() const {
     for (int i = 0; i < 8; i++) {
         assert(corner_perms[i] == 1);
     }
-#endif
 }
 
 
