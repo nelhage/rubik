@@ -38,11 +38,11 @@ class Cube {
          std::array<uint8_t, 8> corners);
 public:
     static constexpr uint8_t kEdgePermMask    = 0x0f;
-    static constexpr uint8_t kEdgeAlignMask   = 0x10;
     static constexpr uint8_t kEdgeAlignShift  = 4;
+    static constexpr uint8_t kEdgeAlignMask   = 0x1 << kEdgeAlignShift;
     static constexpr uint8_t kCornerPermMask  = 0x07;
-    static constexpr uint8_t kCornerAlignMask = 0x30;
-    static constexpr uint8_t kCornerAlignShift  = 4;
+    static constexpr uint8_t kCornerAlignShift = 3;
+    static constexpr uint8_t kCornerAlignMask = 3 << kCornerAlignShift;
 
     Cube();
     Cube apply(const Cube &rhs) const;
