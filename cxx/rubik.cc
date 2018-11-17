@@ -29,22 +29,6 @@ Cube::Cube(__m128i edges, __m128i corners)
     sanityCheck();
 }
 
-union edge_union {
-    __m128i mm;
-    struct {
-        std::array<uint8_t, 12> arr;
-        uint32_t pad;
-    };
-};
-
-union corner_union {
-    __m128i mm;
-    struct {
-        std::array<uint8_t, 8> arr;
-        uint32_t pad;
-    };
-};
-
 Cube::Cube(std::array<uint8_t, 12> edges,
            std::array<uint8_t, 8> corners) {
     edge_union e;

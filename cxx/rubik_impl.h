@@ -9,6 +9,21 @@ struct search_node {
 };
 extern const std::vector<search_node> *ftm_root;
 
+union edge_union {
+    __m128i mm;
+    struct {
+        std::array<uint8_t, 12> arr;
+        uint32_t pad;
+    };
+};
+
+union corner_union {
+    __m128i mm;
+    struct {
+        std::array<uint8_t, 8> arr;
+        uint32_t pad;
+    };
+};
 
 template <typename Check, typename Prune, typename Unwind>
 bool search(const Cube &pos,
