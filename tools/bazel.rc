@@ -1,0 +1,6 @@
+build --cxxopt=-std=c++14
+build --cxxopt=-Wall
+build --cxxopt=-Werror
+build --cxxopt=-Wno-unused-parameter
+
+build:ndebug --cxxopt=-DNDEBUG
