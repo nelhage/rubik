@@ -20,15 +20,22 @@ static Cube solved;
 int face_heuristic(const Cube &pos) {
     rubik::edge_union eu;
     rubik::corner_union cu;
-    auto inv = pos.invert();
 
-    eu.mm = inv.getEdges();
-    cu.mm = inv.getCorners();
+    eu.mm = pos.getEdges();
+    cu.mm = pos.getCorners();
 
     int h = 0;
-    for (int i = 0; i < 4; i++) {
-        h = max<int>(h, edge_dist[(i << 5) | eu.arr[i]]);
-        h = max<int>(h, corner_dist[(i << 5) | cu.arr[i]]);
+    for (uint i = 0; i < eu.arr.size(); ++i) {
+        auto v = eu.arr[i];
+        if ((v & rubik::Cube::kEdgePermMask) >= 4)
+            continue;
+        h = max<int>(h, edge_dist[(i << 5) | v]);
+    }
+    for (uint i = 0; i < cu.arr.size(); ++i) {
+        auto v = cu.arr[i];
+        if ((v & rubik::Cube::kCornerPermMask) >= 4)
+            continue;
+        h = max<int>(h, corner_dist[(i << 5) | v]);
     }
     return h;
 }
@@ -76,16 +83,23 @@ void search_heuristic(int max_depth) {
 bool face_prune(const Cube &pos, int depth) {
     rubik::edge_union eu;
     rubik::corner_union cu;
-    auto inv = pos.invert();
 
-    eu.mm = inv.getEdges();
-    cu.mm = inv.getCorners();
+    eu.mm = pos.getEdges();
+    cu.mm = pos.getCorners();
 
-    for (int i = 0; i < 4; i++) {
-        if (edge_dist[(i << 5) | eu.arr[i]] > depth) {
+    for (uint i = 0; i < eu.arr.size(); ++i) {
+        auto v = eu.arr[i];
+        if ((v & rubik::Cube::kEdgePermMask) >= 4)
+            continue;
+        if (edge_dist[(i << 5) | v] > depth) {
             return true;
         }
-        if (corner_dist[(i << 5) | cu.arr[i]] > depth) {
+    }
+    for (uint i = 0; i < cu.arr.size(); ++i) {
+        auto v = cu.arr[i];
+        if ((v & rubik::Cube::kCornerPermMask) >= 4)
+            continue;
+        if (corner_dist[(i << 5) | v] > depth) {
             return true;
         }
     }
