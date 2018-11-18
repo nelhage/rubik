@@ -75,21 +75,6 @@ void bench_search() {
             "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2");
     vector<Cube> out;
 
-    benchmark("search-1", [&]() {
-            if (search(superflip, out, 1)) {
-                abort();
-            }
-        });
-    benchmark("search-2", [&]() {
-            if (search(superflip, out, 2)) {
-                abort();
-            }
-        });
-    benchmark("search-3", [&]() {
-            if (search(superflip, out, 3)) {
-                abort();
-            }
-        });
     benchmark("search-4", [&]() {
             if (search(superflip, out, 4)) {
                 abort();
