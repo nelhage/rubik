@@ -2,6 +2,10 @@ build --cxxopt=-std=c++14
 build --cxxopt=-Wall
 build --cxxopt=-Werror
 build --cxxopt=-Wno-unused-parameter
+build --host_cxxopt=-std=c++14
+build --host_cxxopt=-Wall
+build --host_cxxopt=-Werror
+build --host_cxxopt=-Wno-unused-parameter
 
 build:ndebug --cxxopt=-DNDEBUG
 

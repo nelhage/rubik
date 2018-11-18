@@ -4,14 +4,13 @@ cc_library(
     name = "rubik",
     srcs = [
         "rubik.cc",
-        "tables.cc",
     ],
     hdrs = [
         "rubik.h",
         "rubik_impl.h",
-        "tables.h",
     ],
     copts = SSEOPT,
+    includes = ["."],
 )
 
 cc_library(
@@ -34,11 +33,34 @@ cc_binary(
     name = "rubik_scratch",
     srcs = ["rubik_scratch.cc"],
     copts = SSEOPT,
-    deps = [":rubik"],
+    deps = [
+        ":rubik",
+        ":tables",
+    ],
 )
 
 cc_binary(
     name = "rubik_bench",
     srcs = ["rubik_bench.cc"],
     deps = [":rubik"],
+)
+
+cc_binary(
+    name = "gen_tables",
+    srcs = ["tools/gen_tables.cc"],
+    deps = [":rubik"],
+)
+
+cc_library(
+    name = "tables",
+    srcs = [":build_tables"],
+    hdrs = ["tables.h"],
+    includes = ["."],
+)
+
+genrule(
+    name = "build_tables",
+    outs = ["tables.cc"],
+    cmd = "$(location :gen_tables) > $@",
+    tools = [":gen_tables"],
 )

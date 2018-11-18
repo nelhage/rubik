@@ -18,26 +18,17 @@ using namespace std;
 static Cube solved;
 
 int face_heuristic(const Cube &pos) {
-    std::array<uint8_t, 12> edge;
-    std::array<uint8_t, 8> corner;
     rubik::edge_union eu;
     rubik::corner_union cu;
+    auto inv = pos.invert();
 
-    eu.mm = pos.getEdges();
-    cu.mm = pos.getCorners();
-    for (uint i = 0; i < eu.arr.size(); ++i) {
-        edge[eu.arr[i] & rubik::Cube::kEdgePermMask]
-            = i | (eu.arr[i] & rubik::Cube::kEdgeAlignMask);
-    }
-    for (uint i = 0; i < cu.arr.size(); ++i) {
-        corner[cu.arr[i] & rubik::Cube::kCornerPermMask]
-            = i | (cu.arr[i] & rubik::Cube::kCornerAlignMask);
-    }
+    eu.mm = inv.getEdges();
+    cu.mm = inv.getCorners();
 
     int h = 0;
     for (int i = 0; i < 4; i++) {
-        h = max<int>(h, edge_dist[(i << 5) | edge[i]]);
-        h = max<int>(h, corner_dist[(i << 5) | corner[i]]);
+        h = max<int>(h, edge_dist[(i << 5) | eu.arr[i]]);
+        h = max<int>(h, corner_dist[(i << 5) | cu.arr[i]]);
     }
     return h;
 }
@@ -83,27 +74,18 @@ void search_heuristic(int max_depth) {
 }
 
 bool face_prune(const Cube &pos, int depth) {
-    std::array<uint8_t, 12> edge;
-    std::array<uint8_t, 8> corner;
     rubik::edge_union eu;
     rubik::corner_union cu;
+    auto inv = pos.invert();
 
-    eu.mm = pos.getEdges();
-    cu.mm = pos.getCorners();
-    for (uint i = 0; i < eu.arr.size(); ++i) {
-        edge[eu.arr[i] & rubik::Cube::kEdgePermMask]
-            = i | (eu.arr[i] & rubik::Cube::kEdgeAlignMask);
-    }
-    for (uint i = 0; i < cu.arr.size(); ++i) {
-        corner[cu.arr[i] & rubik::Cube::kCornerPermMask]
-            = i | (cu.arr[i] & rubik::Cube::kCornerAlignMask);
-    }
+    eu.mm = inv.getEdges();
+    cu.mm = inv.getCorners();
 
     for (int i = 0; i < 4; i++) {
-        if (edge_dist[(i << 5) | edge[i]] > depth) {
+        if (edge_dist[(i << 5) | eu.arr[i]] > depth) {
             return true;
         }
-        if (corner_dist[(i << 5) | corner[i]] > depth) {
+        if (corner_dist[(i << 5) | cu.arr[i]] > depth) {
             return true;
         }
     }
