@@ -169,7 +169,7 @@ const Cube Rotations::B2(B.apply(B));
 const Cube Rotations::Binv(B.invert());
 
 namespace {
-const std::vector<search_node> *make_ftm_tree() {
+const std::vector<search_node> *make_qtm_tree() {
     static std::vector<search_node>
         l, linv,
         r, rinv,
@@ -256,7 +256,7 @@ const std::vector<search_node> *make_ftm_tree() {
 }
 };
 
-const vector<search_node> *ftm_root = make_ftm_tree();
+const vector<search_node> *qtm_root = make_qtm_tree();
 
 Cube solved;
 
@@ -292,7 +292,7 @@ int edge_heuristic(const Cube &pos) {
 bool search(Cube start, vector<Cube> &path, int max_depth) {
     path.resize(0);
     bool ok = search(
-            start, *ftm_root, max_depth,
+            start, *qtm_root, max_depth,
             [&](const Cube &pos, int) {
                 return (pos == solved);
             },

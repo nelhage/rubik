@@ -7,7 +7,7 @@ struct search_node {
     const Cube &rotation;
     std::vector<search_node> *next;
 };
-extern const std::vector<search_node> *ftm_root;
+extern const std::vector<search_node> *qtm_root;
 
 union edge_union {
     __m128i mm;

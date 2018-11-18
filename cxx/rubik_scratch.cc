@@ -47,7 +47,7 @@ void search_heuristic(int max_depth) {
     }
 
     search(
-            Cube(), *ftm_root, max_depth,
+            Cube(), *qtm_root, max_depth,
             [&](const Cube &pos, int depth) {
                 int h = face_heuristic(pos);
                 assert(h <= max_depth - depth);
@@ -116,7 +116,7 @@ void search_face() {
     for (int depth = 0; depth < 15; ++depth) {
         vector<Cube> path;
         bool ok = search(
-                superflip, *ftm_root, depth,
+                superflip, *qtm_root, depth,
                 [&](const Cube &pos, int) {
                     return _mm_test_all_zeros(
                             _mm_or_si128(
