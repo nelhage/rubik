@@ -59,32 +59,34 @@ Cube Cube::apply(const Cube &other) const {
 }
 
 Cube Cube::invert() const {
-    array<uint8_t, 12> out_edges;
-    array<uint8_t, 8> out_corners;
+    edge_union eu, oe;
+    corner_union cu, oc;
 
-    edge_union eu;
-    corner_union cu;
     eu.mm = edges;
     cu.mm = corners;
 
     for (int i = 0; i < 12; ++i) {
         auto idx = eu.arr[i] & kEdgePermMask;
-        out_edges[idx] = i;
+        oe.arr[idx] = i;
     }
-    for (int i = 0; i < 12; ++i) {
-        auto idx = out_edges[i] & kEdgePermMask;
-        out_edges[i] ^= eu.arr[idx] & kEdgeAlignMask;
-    }
+    oe.mm = _mm_or_si128(
+            oe.mm,
+            _mm_and_si128(_mm_shuffle_epi8(edges, oe.mm),
+                          _mm_set1_epi8(kEdgeAlignMask)));
+
     for (int i = 0; i < 8; ++i) {
         auto idx = cu.arr[i] & kCornerPermMask;
-        out_corners[idx] = i;
+        oc.arr[idx] = i;
     }
-    for (int i = 0; i < 8; ++i) {
-        auto idx = out_corners[i] & kCornerPermMask;
-        uint8_t align = (3 - ((cu.arr[idx] & kCornerAlignMask) >> kCornerAlignShift)) % 3;
-        out_corners[i] |= align << kCornerAlignShift;
-    }
-    return Cube(out_edges, out_corners);
+
+    auto rot = _mm_and_si128(_mm_shuffle_epi8(corners, oc.mm),
+                             _mm_set1_epi8(kCornerAlignMask));
+    auto threes = _mm_set1_epi8(3 << kCornerAlignShift);
+    auto zeromask = _mm_cmpeq_epi8(rot, _mm_set1_epi8(0));
+    oc.mm = _mm_or_si128(
+            oc.mm,
+            _mm_andnot_si128(zeromask, _mm_sub_epi8(threes, rot)));
+    return Cube(oe.mm, oc.mm);
 }
 
 bool Cube::operator==(const Cube &rhs) const {
