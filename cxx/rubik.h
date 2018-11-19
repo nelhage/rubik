@@ -32,10 +32,6 @@ class Cube {
 
     __m128i edges;
     __m128i corners;
-
-    Cube(__m128i edges, __m128i corners);
-    Cube(std::array<uint8_t, 12> edges,
-         std::array<uint8_t, 8> corners);
 public:
     static constexpr uint8_t kEdgePermMask    = 0x0f;
     static constexpr uint8_t kEdgeAlignShift  = 4;
@@ -45,6 +41,10 @@ public:
     static constexpr uint8_t kCornerAlignMask = 3 << kCornerAlignShift;
 
     Cube();
+    Cube(__m128i edges, __m128i corners);
+    Cube(std::array<uint8_t, 12> edges,
+         std::array<uint8_t, 8> corners);
+
     Cube apply(const Cube &rhs) const;
     Cube invert() const;
 
