@@ -15,3 +15,5 @@ build:opt --copt=-O3
 build:opt --cxxopt=-O3
 build:opt --copt=-funroll-loops
 build:opt --cxxopt=-funroll-loops
+
+build:dbg -c dbg
