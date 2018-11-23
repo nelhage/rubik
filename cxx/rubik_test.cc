@@ -64,8 +64,7 @@ TEST_CASE("Invert", "[rubik]") {
 }
 
 Cube superflip() {
-    return rubik::from_algorithm(
-            "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2");
+    return get<Cube>(rubik::from_algorithm("U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"));
 }
 
 TEST_CASE("Cube::operator==", "[rubik]") {
@@ -119,10 +118,10 @@ TEST_CASE("Search", "[rubik]") {
     for (auto &tc: tests) {
         INFO("search(\"" << tc.in << "\", " << tc.depth << ")");
         vector<Cube> path;
-        Cube in = from_algorithm(tc.in);
+        Cube in = get<Cube>(from_algorithm(tc.in));
         bool ok = search(in, path, tc.depth);
         CHECK(ok == tc.ok);
-        INFO("-> " << to_algorithm(path));
+        INFO("-> " << get<string>(to_algorithm(path)));
         CHECK(equal(tc.out.begin(), tc.out.end(),
                     path.begin(), path.end()));
     }

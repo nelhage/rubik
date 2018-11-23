@@ -196,8 +196,9 @@ void search_heuristic(int max_depth) {
 }
 
 void search_two() {
-    auto superflip = rubik::from_algorithm(
-            "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2");
+    auto superflip = get<Cube>(
+            rubik::from_algorithm(
+                    "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"));
 
     const auto edge_mask = _mm_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff);
     const auto corner_mask = _mm_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff);
@@ -236,7 +237,7 @@ void search_two() {
             cout << "depth=" << depth << ": no\n";
         } else {
             reverse(path.begin(), path.end());
-            cout << "depth=" << depth << ": yes: "<< to_algorithm(path) << "\n";
+            cout << "depth=" << depth << ": yes: "<< get<string>(to_algorithm(path)) << "\n";
             return;
         }
     }

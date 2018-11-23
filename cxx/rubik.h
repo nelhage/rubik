@@ -6,6 +6,8 @@
 #include <array>
 #include <vector>
 
+#include "absl/types/variant.h"
+
 namespace rubik {
 class Rotations;
 
@@ -80,8 +82,15 @@ void search(const Cube &pos,
             const Visit &visit);
 bool search(Cube start, std::vector<Cube> &path, int max_depth);
 
-Cube from_algorithm(const std::string &str);
-std::string to_algorithm(const std::vector<Cube> &path);
+template <typename Ok, typename Err> using Result = absl::variant<Ok, Err>;
+
+struct Error {
+    std::string error;
+};
+
+Result<Cube, Error> from_algorithm(const std::string &str);
+Result<Cube, Error> from_cubelets(const std::string &notation);
+Result<std::string, Error> to_algorithm(const std::vector<Cube> &path);
 
 class Rotations {
     static constexpr uint8_t E = Cube::kEdgeAlignMask;

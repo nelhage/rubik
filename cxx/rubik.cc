@@ -335,7 +335,7 @@ vector<pair<string, const Cube&>> moves = {
     {"D2", Rotations::D2},
 };
 
-Cube from_algorithm(const string &str) {
+Result<Cube, Error> from_algorithm(const string &str) {
     Cube out;
     auto it = str.begin();
     while (it != str.end()) {
@@ -347,8 +347,7 @@ Cube from_algorithm(const string &str) {
                                return ent.first == word;
                            });
         if (fnd == moves.end()) {
-            cerr << "unknown move: " << word << "\n";
-            abort();
+            return Error{"unknown move: " + word};
         }
         out = out.apply(fnd->second);
         it = next;
@@ -359,7 +358,7 @@ Cube from_algorithm(const string &str) {
     return out;
 }
 
-string to_algorithm(const vector<Cube> &path) {
+Result<string, Error> to_algorithm(const vector<Cube> &path) {
     stringstream out;
     for (auto &cube : path) {
         auto fnd = find_if(moves.begin(),
@@ -367,13 +366,22 @@ string to_algorithm(const vector<Cube> &path) {
                            [&](auto &ent) {
                                return ent.second == cube;
                            });
-        assert(fnd != moves.end());
+        if (fnd == moves.end()) {
+            return Error{"Unrecognized rotation"};
+        }
         if (&cube != &path.front()) {
             out << ' ';
         }
         out << fnd->first;
     }
     return out.str();
+}
+
+Result<Cube, Error> from_cubelets(const std::string &str) {
+    if (str.size() != 6*9) {
+        return Error{"Wrong string size: " + str.size()};
+    }
+    return Cube();
 }
 
 };

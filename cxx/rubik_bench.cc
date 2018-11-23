@@ -71,8 +71,9 @@ void bench_invert() {
 }
 
 void bench_search() {
-    Cube superflip = rubik::from_algorithm(
-            "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2");
+    Cube superflip = get<Cube>(
+            rubik::from_algorithm(
+                    "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"));
     vector<Cube> out;
 
     benchmark("search-4", [&]() {
