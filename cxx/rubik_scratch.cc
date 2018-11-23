@@ -138,15 +138,11 @@ int face_heuristic(const Cube &pos) {
     int h = 0;
     for (uint i = 0; i < eu.arr.size(); ++i) {
         auto v = eu.arr[i];
-        if ((v & rubik::Cube::kEdgePermMask) >= 4)
-            continue;
-        h = max<int>(h, edge_dist[(i << 5) | v]);
+         h = max<int>(h, edge_dist[(i << 5) | v]);
     }
     for (uint i = 0; i < cu.arr.size(); ++i) {
         auto v = cu.arr[i];
-        if ((v & rubik::Cube::kCornerPermMask) >= 4)
-            continue;
-        h = max<int>(h, corner_dist[(i << 5) | v]);
+         h = max<int>(h, corner_dist[(i << 5) | v]);
     }
     return h;
 }
@@ -246,8 +242,8 @@ void search_two() {
 int main() {
     precompute();
 
-    // search_heuristic(6);
-    search_two();
+    search_heuristic(6);
+    // search_two();
 
     return 0;
 }

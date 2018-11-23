@@ -7,26 +7,28 @@
 
 using namespace std;
 
-void floyd_warshall(size_t n, int32_t *grid) {
+void floyd_warshall(size_t n, array<int8_t, 32*32> &grid) {
     for (size_t k = 0; k < n; ++k) {
         for (size_t i = 0; i < n; ++i) {
             for (size_t j = 0; j < n; ++j) {
-                grid[i*n+j] = min(grid[i*n+j], grid[i*n+k] + grid[k*n+j]);
+                grid[i*n+j] = min<int8_t>(grid[i*n+j], grid[i*n+k] + grid[k*n+j]);
             }
         }
     }
 }
 
-void render(const string &name, array<int32_t, 32*32> &vals) {
-    cout << "int8_t " << name << "[] = {\n";
+const int8_t kInfinity = 50;
+
+void render(const string &name, array<int8_t, 32*32> &vals) {
+    cout << "std::array<int8_t, 32*32> " << name << " {\n";
     for (int i = 0; i < 32; i++) {
         cout << "    ";
         for (int j = 0; j < 32; j++) {
             auto v = vals[i*32+j];
-            if (v == 1000) {
+            if (v >= kInfinity) {
                 cout << "-1";
             } else {
-                cout << v;
+                cout << (int)v;
             }
             cout << ",";
             if (j != 31) {
@@ -37,6 +39,13 @@ void render(const string &name, array<int32_t, 32*32> &vals) {
     }
     cout << "};\n";
 }
+
+namespace rubik {
+array<int8_t, 32*32> corner_dist;
+array<int8_t, 32*32> edge_dist;
+};
+
+using namespace rubik;
 
 int main() {
     vector<rubik::Cube> moves{
@@ -54,8 +63,7 @@ int main() {
         rubik::Rotations::Binv,
     };
 
-    array<int32_t, 32*32> edges;
-    fill(edges.begin(), edges.end(), 1000);
+    fill(edge_dist.begin(), edge_dist.end(), kInfinity);
     for (const auto &m : moves) {
         rubik::edge_union eu;
         eu.mm = m.getEdges();
@@ -63,12 +71,11 @@ int main() {
             for (int a = 0; a < 2; a++) {
                 uint from = (a << rubik::Cube::kEdgeAlignShift) | i;
                 uint to   = eu.arr[i] ^ (a << rubik::Cube::kEdgeAlignShift);
-                edges[from*32 + to] = 1;
+                edge_dist[from*32 + to] = 1;
             }
         }
     }
-    array<int32_t, 32*32> corners;
-    fill(corners.begin(), corners.end(), 1000);
+    fill(corner_dist.begin(), corner_dist.end(), kInfinity);
     for (const auto &m : moves) {
         rubik::corner_union cu;
         cu.mm = m.getCorners();
@@ -82,22 +89,22 @@ int main() {
                 }
                 assert(from < 32);
                 assert(to < 32);
-                corners[from*32 + to] = 1;
+                corner_dist[from*32 + to] = 1;
             }
         }
     }
     for (int i = 0; i < 32; ++i) {
-        edges[i*32 + i] = 0;
-        corners[i*32 + i] = 0;
+        edge_dist[i*32 + i] = 0;
+        corner_dist[i*32 + i] = 0;
     }
 
     cout << "#include \"tables.h\"\n";
     cout << "\n";
     cout << "namespace rubik {\n";
-    floyd_warshall(32, &edges[0]);
-    render("edge_dist", edges);
-    floyd_warshall(32, &corners[0]);
-    render("corner_dist", corners);
+    floyd_warshall(32, edge_dist);
+    render("edge_dist", edge_dist);
+    floyd_warshall(32, corner_dist);
+    render("corner_dist", corner_dist);
     cout << "}\n";
 
     return 0;

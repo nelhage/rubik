@@ -1,6 +1,7 @@
 #include <stdint.h>
+#include <array>
 
 namespace rubik {
-    extern int8_t edge_dist[32*32];
-    extern int8_t corner_dist[32*32];
+extern std::array<int8_t, 32*32> edge_dist;
+extern std::array<int8_t, 32*32> corner_dist;
 };
