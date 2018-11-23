@@ -71,6 +71,18 @@ TEST_CASE("Cube::operator==", "[rubik]") {
     REQUIRE(superflip() != Cube());
 }
 
+TEST_CASE("from_facelets", "[rubik]") {
+    CHECK(absl::holds_alternative<rubik::Error>(
+                  rubik::from_facelets("")));
+    CHECK(absl::holds_alternative<rubik::Error>(
+                  rubik::from_facelets("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")));
+    auto c = rubik::from_facelets("WWWWWWWWWGGGRRRBBBOOOGGGRRRBBBOOOGGGRRRBBBOOOYYYYYYYYY");
+    if (!absl::holds_alternative<rubik::Cube>(c)) {
+        FAIL("error: " << get<rubik::Error>(c).error);
+    }
+    CHECK(get<Cube>(c) == Cube());
+}
+
 TEST_CASE("Search", "[rubik]") {
     struct {
         string in;

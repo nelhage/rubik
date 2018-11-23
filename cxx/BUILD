@@ -12,7 +12,10 @@ cc_library(
     copts = SSEOPT,
     includes = ["."],
     linkopts = ["-pthread"],
-    deps = ["@com_google_absl//absl/types:variant"],
+    deps = [
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:variant",
+    ],
 )
 
 cc_library(

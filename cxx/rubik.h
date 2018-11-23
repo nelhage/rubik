@@ -17,7 +17,7 @@ enum class Color : char {
     Green = 'G',
     Blue = 'B',
     Orange = 'O',
-    Yello = 'Y',
+    Yellow = 'Y',
 };
 
 enum class Face : char {
@@ -89,14 +89,10 @@ struct Error {
 };
 
 Result<Cube, Error> from_algorithm(const std::string &str);
-Result<Cube, Error> from_cubelets(const std::string &notation);
+Result<Cube, Error> from_facelets(const std::string &notation);
 Result<std::string, Error> to_algorithm(const std::vector<Cube> &path);
 
 class Rotations {
-    static constexpr uint8_t E = Cube::kEdgeAlignMask;
-    static constexpr uint8_t C0 = 0 << Cube::kCornerAlignShift;
-    static constexpr uint8_t C1 = 1 << Cube::kCornerAlignShift;
-    static constexpr uint8_t C2 = 2 << Cube::kCornerAlignShift;
 public:
     static const Cube L, L2, Linv;
     static const Cube R, R2, Rinv;

@@ -1,6 +1,8 @@
 #include "rubik.h"
 #include "rubik_impl.h"
 
+#include "absl/strings/str_cat.h"
+
 #include <emmintrin.h>
 #include <tmmintrin.h>
 #include <smmintrin.h>
@@ -8,6 +10,7 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
+#include <map>
 
 #include <iomanip>
 #include <iostream>
@@ -136,6 +139,13 @@ void Cube::sanityCheck() const {
         assert(corner_perms[i] == 1);
     }
 }
+
+namespace {
+static constexpr uint8_t E = Cube::kEdgeAlignMask;
+static constexpr uint8_t C0 = 0 << Cube::kCornerAlignShift;
+static constexpr uint8_t C1 = 1 << Cube::kCornerAlignShift;
+static constexpr uint8_t C2 = 2 << Cube::kCornerAlignShift;
+};
 
 
 const Cube Rotations::L({4, 1, 2, 3, 8, 5, 6, 0, 7, 9, 10, 11},
@@ -377,11 +387,209 @@ Result<string, Error> to_algorithm(const vector<Cube> &path) {
     return out.str();
 }
 
-Result<Cube, Error> from_cubelets(const std::string &str) {
+namespace {
+
+const map<pair<Color, Color>, uint8_t> edge_map {
+    {{Color::Red, Color::Green},       0},
+    {{Color::Green, Color::Red},     E|0},
+    {{Color::Red, Color::White},       1},
+    {{Color::White, Color::Red},     E|1},
+    {{Color::Red, Color::Blue},        2},
+    {{Color::Blue, Color::Red},      E|2},
+    {{Color::Red, Color::Yellow},      3},
+    {{Color::Yellow, Color::Red},    E|3},
+    {{Color::White, Color::Green},     4},
+    {{Color::Green, Color::White},   E|4},
+    {{Color::Blue, Color::White},      5},
+    {{Color::White, Color::Blue},    E|5},
+    {{Color::Blue, Color::Yellow},     6},
+    {{Color::Yellow, Color::Blue},   E|6},
+    {{Color::Yellow, Color::Green},    7},
+    {{Color::Green, Color::Yellow},  E|7},
+    {{Color::Orange, Color::Green},    8},
+    {{Color::Green, Color::Orange},  E|8},
+    {{Color::Orange, Color::White},    9},
+    {{Color::White, Color::Orange},  E|9},
+    {{Color::Orange, Color::Blue},     10},
+    {{Color::Blue, Color::Orange},   E|10},
+    {{Color::Orange, Color::Yellow},   11},
+    {{Color::Yellow, Color::Orange}, E|11},}
+;
+
+const map<tuple<Color, Color, Color>, uint8_t> corner_map {
+    {{Color::Red, Color::Green, Color::White},        0},
+    {{Color::Green, Color::White, Color::Red},     C1|0},
+    {{Color::White, Color::Red, Color::Green},     C2|0},
+
+    {{Color::Red, Color::White, Color::Blue},         1},
+    {{Color::White, Color::Blue, Color::Red},      C1|1},
+    {{Color::Blue, Color::Red, Color::White},      C2|1},
+
+    {{Color::Red, Color::Blue, Color::Yellow},        2},
+    {{Color::Blue, Color::Yellow, Color::Red},     C1|2},
+    {{Color::Yellow, Color::Red, Color::Blue},     C2|2},
+
+    {{Color::Red, Color::Yellow, Color::Green},       3},
+    {{Color::Yellow, Color::Green, Color::Red},    C1|3},
+    {{Color::Green, Color::Red, Color::Yellow},    C2|3},
+
+    {{Color::Orange, Color::White, Color::Green},     4},
+    {{Color::White, Color::Green, Color::Orange},  C1|4},
+    {{Color::Green, Color::Orange, Color::White},  C2|4},
+
+    {{Color::Orange, Color::Blue, Color::White},      5},
+    {{Color::Blue, Color::White, Color::Orange},   C1|5},
+    {{Color::White, Color::Orange, Color::Blue},   C2|5},
+
+    {{Color::Orange, Color::Yellow, Color::Blue},     6},
+    {{Color::Yellow, Color::Blue, Color::Orange},  C1|6},
+    {{Color::Blue, Color::Orange, Color::Yellow},  C2|6},
+
+    {{Color::Orange, Color::Green, Color::Yellow},    7},
+    {{Color::Green, Color::Yellow, Color::Orange}, C1|7},
+    {{Color::Yellow, Color::Orange, Color::Green}, C2|7},
+};
+
+const vector<pair<int, int>> edge_indexes {
+    {24, 23},
+    {13, 7},
+    {26, 27},
+    {37, 46},
+
+    {3, 10},
+    {16, 5},
+    {40, 50},
+    {48, 34},
+
+    {32, 21},
+    {19, 1},
+    {30, 29},
+    {43, 52},
+};
+
+const vector<tuple<int, int, int>> corner_indexes {
+    {12, 11, 6},
+    {14, 8, 15},
+    {38, 39, 47},
+    {36, 45, 35},
+
+    {20, 0, 9},
+    {18, 17, 2},
+    {42, 53, 41},
+    {44, 33, 51},
+};
+
+const vector<pair<int, Color>> centers {
+    {4, Color::White},
+    {22, Color::Green},
+    {25, Color::Red},
+    {28, Color::Blue},
+    {31, Color::Orange},
+    {49, Color::Yellow},
+};
+
+struct __check_invariants {
+    __check_invariants() {
+        if (debug_mode) {
+            return;
+        }
+
+        array<int, 6*9> indices;
+        fill(indices.begin(), indices.end(), 0);
+
+        const auto &visit = [&](int idx) {
+            if (idx >= (int)indices.size()) {
+                cerr << "index out of range: " << idx << "\n";
+                abort();
+            }
+            if (indices[idx]) {
+                cerr << "duplicate index: " << idx << "\n";
+                abort();
+            }
+            indices[idx] = 1;
+        };
+
+        for (auto p : edge_indexes) {
+            visit(p.first);
+            visit(p.second);
+
+        }
+        for (auto p : corner_indexes) {
+            visit(get<0>(p));
+            visit(get<1>(p));
+            visit(get<2>(p));
+        }
+        for (auto p : centers) {
+            visit(p.first);
+        }
+        for (auto &i : indices) {
+            if (!i) {
+                cerr << "missing index: " << &i - &indices.front() << "\n";
+                abort();
+            }
+        }
+    }
+
+} __check;
+
+};
+
+
+Result<Cube, Error> from_facelets(const std::string &str) {
     if (str.size() != 6*9) {
         return Error{"Wrong string size: " + str.size()};
     }
-    return Cube();
+    int i = 0;
+    for (auto c : centers) {
+        if ((Color)str[c.first] != c.second) {
+            return Error{
+                absl::StrCat("Wrong ordering: side ", i, " should be `",
+                             string(1, (char)c.second), "', got `",
+                             string(1, str[c.first]), "'")
+            };
+        }
+        ++i;
+    }
+    edge_union eu;
+    corner_union cu;
+    i = 0;
+    for (auto e : edge_indexes) {
+        auto cs = make_pair((Color)str[e.first], (Color)str[e.second]);
+        auto fnd = edge_map.find(cs);
+        if (fnd == edge_map.end()) {
+            return Error {
+                absl::StrCat("Can't find edge: ",
+                             string(&str[e.first], 1), "/", string(&str[e.second], 1),
+                             " (index ", e.first, "/", e.second, ")")
+            };
+        }
+        eu.arr[i++] = fnd->second;
+    }
+
+    i = 0;
+    for (auto c : corner_indexes) {
+        auto cs = make_tuple(
+                (Color)str[get<0>(c)],
+                (Color)str[get<1>(c)],
+                (Color)str[get<2>(c)]);
+        auto fnd = corner_map.find(cs);
+        if (fnd == corner_map.end()) {
+            return Error {
+                absl::StrCat("Can't find corner: ",
+                             string(&str[get<0>(c)], 1), "/",
+                             string(&str[get<1>(c)], 1), "/",
+                             string(&str[get<2>(c)], 1),
+                             " (index ",
+                             get<0>(c), "/",
+                             get<1>(c), "/",
+                             get<2>(c),
+                             ")")
+            };
+        }
+        cu.arr[i++] = fnd->second;
+    }
+
+    return Cube(eu.mm, cu.mm);
 }
 
 };
