@@ -1,7 +1,7 @@
 SSEOPT = ["-msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2"]
 
 cc_library(
-    name = "rubik",
+    name = "rubik_core",
     srcs = [
         "rubik.cc",
     ],
@@ -15,6 +15,39 @@ cc_library(
     deps = [
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:variant",
+    ],
+)
+
+cc_binary(
+    name = "gen_tables",
+    srcs = ["tools/gen_tables.cc"],
+    copts = SSEOPT,
+    deps = [":rubik_core"],
+)
+
+cc_library(
+    name = "tables",
+    srcs = [":run_gen_tables"],
+    hdrs = ["tables.h"],
+    includes = ["."],
+)
+
+genrule(
+    name = "run_gen_tables",
+    outs = ["tables.cc"],
+    cmd = "$(location :gen_tables) > $@",
+    tools = [":gen_tables"],
+)
+
+cc_library(
+    name = "rubik",
+    srcs = [
+        "search.cc",
+    ],
+    copts = SSEOPT,
+    deps = [
+        ":rubik_core",
+        ":tables",
     ],
 )
 
@@ -40,7 +73,6 @@ cc_binary(
     copts = SSEOPT,
     deps = [
         ":rubik",
-        ":tables",
     ],
 )
 
@@ -48,25 +80,4 @@ cc_binary(
     name = "rubik_bench",
     srcs = ["rubik_bench.cc"],
     deps = [":rubik"],
-)
-
-cc_binary(
-    name = "gen_tables",
-    srcs = ["tools/gen_tables.cc"],
-    copts = SSEOPT,
-    deps = [":rubik"],
-)
-
-cc_library(
-    name = "tables",
-    srcs = [":build_tables"],
-    hdrs = ["tables.h"],
-    includes = ["."],
-)
-
-genrule(
-    name = "build_tables",
-    outs = ["tables.cc"],
-    cmd = "$(location :gen_tables) > $@",
-    tools = [":gen_tables"],
 )
