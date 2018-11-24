@@ -53,6 +53,7 @@ cc_binary(
 cc_binary(
     name = "gen_tables",
     srcs = ["tools/gen_tables.cc"],
+    copts = SSEOPT,
     deps = [":rubik"],
 )
 

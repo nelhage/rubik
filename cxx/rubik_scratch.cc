@@ -16,102 +16,10 @@ using namespace rubik;
 using namespace std;
 
 static Cube solved;
-static array<int8_t, 32*32> two_dist;
 static vector<pair<Cube, Cube>> topSymmetries;
 
-bool prefix_prune(const Cube &pos, int n, int depth) {
-    rubik::edge_union eu;
-    rubik::corner_union cu;
-
-    eu.mm = pos.getEdges();
-    cu.mm = pos.getCorners();
-
-    for (uint i = 0; i < eu.arr.size(); ++i) {
-        auto v = eu.arr[i];
-        if ((v & rubik::Cube::kEdgePermMask) >= n)
-            continue;
-        if (edge_dist[(i << 5) | v] > depth) {
-            return true;
-        }
-    }
-    for (uint i = 0; i < cu.arr.size(); ++i) {
-        auto v = cu.arr[i];
-        if ((v & rubik::Cube::kCornerPermMask) >= n)
-            continue;
-        if (corner_dist[(i << 5) | v] > depth) {
-            return true;
-        }
-    }
-    return false;
-}
-
-int prefix_search(const Cube &init, int n) {
-    union {
-        uint8_t bits[16];
-        __m128i mm;
-    } maskbits;
-    for (int i = 0; i < 16; i++) {
-        if (i < n) {
-            maskbits.bits[i] = 0xff;
-        } else {
-            maskbits.bits[i] = 0;
-        }
-    }
-    const auto mask = maskbits.mm;
-
-    for (int depth = 0;; ++depth) {
-        bool ok = search(
-                init, *qtm_root, depth,
-                [&](const Cube &pos, int) {
-                    return _mm_test_all_zeros(
-                            _mm_or_si128(
-                                    _mm_xor_si128(pos.getEdges(), solved.getEdges()),
-                                    _mm_xor_si128(pos.getCorners(), solved.getCorners())),
-                            mask);
-                },
-                [&](const Cube &pos, int depth) {
-                    return prefix_prune(pos, n, depth);
-                },
-                [&](int, const Cube &) {});
-        if (ok) {
-            return depth;
-        }
-    }
-}
 
 void precompute() {
-    vector<int8_t> all_edge;
-    vector<int8_t> all_corner;
-    for (int e = 0; e < 12; ++e) {
-        for (int ea = 0; ea < 2; ++ea) {
-            all_edge.push_back((ea << rubik::Cube::kEdgeAlignShift) | e);
-        }
-    }
-    for (int c = 0; c < 8; ++c) {
-        for (int ca = 0; ca < 3; ++ca) {
-            all_corner.push_back((ca << rubik::Cube::kCornerAlignShift) | c);
-        }
-    }
-
-
-    for (auto e : all_edge) {
-        for (auto c: all_corner) {
-            rubik::edge_union eu;
-            rubik::corner_union cu;
-            eu.mm = solved.getEdges();
-            cu.mm = solved.getCorners();
-
-            eu.arr[e & rubik::Cube::kEdgePermMask] = 0;
-            eu.arr[0] = e;
-            cu.arr[c & rubik::Cube::kCornerPermMask] = 0;
-            cu.arr[0] = c;
-
-            Cube pos(eu.mm, cu.mm);
-            int d = prefix_search(pos.invert(), 1);
-            two_dist[(e << 5) | c] = d;
-        }
-    }
-
     auto r = rubik::from_facelets("GGGGWGGGGYYYRRRWWWOOOYGYRRRWBWOOOYYYRRRWWWOOOBBBBYBBBB");
     if (!absl::holds_alternative<Cube>(r)) {
         cerr << "bad1: " << get<rubik::Error>(r).error << "\n";
@@ -158,12 +66,12 @@ int two_heuristic(const Cube &pos) {
     corner_union cu;
     eu.mm = inv.getEdges();
     cu.mm = inv.getCorners();
-    int d = two_dist[(eu.arr[0] << 5) | cu.arr[0]];
+    int d = rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]];
     for (auto &p : topSymmetries) {
         auto c = p.second.apply(inv.apply(p.first));
         eu.mm = c.getEdges();
         cu.mm = c.getCorners();
-        d = max<int>(d, two_dist[(eu.arr[0] << 5) | cu.arr[0]]);
+        d = max<int>(d, rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]]);
     }
     return d;
 }
@@ -255,15 +163,12 @@ void search_two() {
                             _mm_set_epi32(0, 0xffffffff, 0xffffffff, 0xffffffff));
                 },
                 [&](const Cube &pos, int depth) {
-                    if (prefix_prune(pos, 4, depth)) {
-                        return true;
-                    }
                     auto inv = pos.invert();
                     edge_union eu;
                     corner_union cu;
                     eu.mm = inv.getEdges();
                     cu.mm = inv.getCorners();
-                    auto d = two_dist[(eu.arr[0] << 5) | cu.arr[0]];
+                    auto d = rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]];
                     if (d > depth) {
                         return true;
                     }
@@ -271,7 +176,7 @@ void search_two() {
                         auto c = p.second.apply(inv.apply(p.first));
                         eu.mm = c.getEdges();
                         cu.mm = c.getCorners();
-                        if (two_dist[(eu.arr[0] << 5) | cu.arr[0]] > depth) {
+                        if (rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]] > depth) {
                             return true;
                         }
                     }
