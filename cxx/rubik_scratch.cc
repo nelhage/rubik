@@ -17,6 +17,7 @@ using namespace std;
 
 static Cube solved;
 static array<int8_t, 32*32> two_dist;
+static vector<pair<Cube, Cube>> topSymmetries;
 
 bool prefix_prune(const Cube &pos, int n, int depth) {
     rubik::edge_union eu;
@@ -110,6 +111,45 @@ void precompute() {
             two_dist[(e << 5) | c] = d;
         }
     }
+
+    auto r = rubik::from_facelets("GGGGWGGGGYYYRRRWWWOOOYGYRRRWBWOOOYYYRRRWWWOOOBBBBYBBBB");
+    if (!absl::holds_alternative<Cube>(r)) {
+        cerr << "bad1: " << get<rubik::Error>(r).error << "\n";
+        abort();
+    }
+    auto rot = get<Cube>(r);
+    /*
+    r = rubik::from_facelets("WWWWWWWWW BBBRRRGGGOOO BGBRRRGBGOOO BBBRRRGGGOOO YYYYYYYYY");
+    if (!absl::holds_alternative<Cube>(r)) {
+        cerr << "bad2: " << get<rubik::Error>(r).error << "\n";
+        abort();
+    }
+    auto mirror = get<Cube>(r);
+    */
+    topSymmetries = {
+        {rot, rot.invert()},
+        {rot.apply(rot), rot.apply(rot)},
+        {rot.invert(), rot},
+        /*
+          mirror,
+        rot.apply(mirror),
+        rot.apply(rot).apply(mirror),
+        rot.invert().apply(mirror),
+        */
+    };
+    if (debug_mode) {
+        for (const auto &s1 : topSymmetries) {
+            for (const auto &s2 : topSymmetries) {
+                if (&s1 == &s2)
+                    continue;
+                if (s1.first == s2.first) {
+                    cerr << "identical symmetries: " << (&s1 - &topSymmetries.front()) << "/" << (&s2 - &topSymmetries.front()) << "\n";
+                    abort();
+                }
+            }
+            assert(s1.first == s1.second.invert());
+        }
+    }
 }
 
 int two_heuristic(const Cube &pos) {
@@ -119,11 +159,11 @@ int two_heuristic(const Cube &pos) {
     eu.mm = inv.getEdges();
     cu.mm = inv.getCorners();
     int d = two_dist[(eu.arr[0] << 5) | cu.arr[0]];
-    if (debug_mode) {
-        int canon = prefix_search(pos, 1);
-        if (d != canon) {
-            abort();
-        }
+    for (auto &p : topSymmetries) {
+        auto c = p.second.apply(inv.apply(p.first));
+        eu.mm = c.getEdges();
+        cu.mm = c.getCorners();
+        d = max<int>(d, two_dist[(eu.arr[0] << 5) | cu.arr[0]]);
     }
     return d;
 }
@@ -224,7 +264,18 @@ void search_two() {
                     eu.mm = inv.getEdges();
                     cu.mm = inv.getCorners();
                     auto d = two_dist[(eu.arr[0] << 5) | cu.arr[0]];
-                    return (d > depth);
+                    if (d > depth) {
+                        return true;
+                    }
+                    for (auto &p : topSymmetries) {
+                        auto c = p.second.apply(inv.apply(p.first));
+                        eu.mm = c.getEdges();
+                        cu.mm = c.getCorners();
+                        if (two_dist[(eu.arr[0] << 5) | cu.arr[0]] > depth) {
+                            return true;
+                        }
+                    }
+                    return false;
                 },
                 [&](int, const Cube &rot) {
                     path.push_back(rot);
@@ -242,8 +293,8 @@ void search_two() {
 int main() {
     precompute();
 
-    search_heuristic(6);
-    // search_two();
+    // search_heuristic(6);
+    search_two();
 
     return 0;
 }
