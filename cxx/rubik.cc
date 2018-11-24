@@ -65,12 +65,11 @@ Cube Cube::invert() const {
     edge_union eu, oe;
     corner_union cu, oc;
 
-    eu.mm = edges;
-    cu.mm = corners;
+    eu.mm = _mm_and_si128(edges, _mm_set1_epi8(kEdgePermMask));
+    cu.mm = _mm_and_si128(corners, _mm_set1_epi8(kCornerPermMask));
 
     for (int i = 0; i < 12; ++i) {
-        auto idx = eu.arr[i] & kEdgePermMask;
-        oe.arr[idx] = i;
+        oe.arr[eu.arr[i]] = i;
     }
     oe.mm = _mm_or_si128(
             oe.mm,
@@ -78,8 +77,7 @@ Cube Cube::invert() const {
                           _mm_set1_epi8(kEdgeAlignMask)));
 
     for (int i = 0; i < 8; ++i) {
-        auto idx = cu.arr[i] & kCornerPermMask;
-        oc.arr[idx] = i;
+        oc.arr[cu.arr[i]] = i;
     }
 
     auto rot = _mm_and_si128(_mm_shuffle_epi8(corners, oc.mm),
