@@ -79,5 +79,8 @@ cc_binary(
 cc_binary(
     name = "rubik_bench",
     srcs = ["rubik_bench.cc"],
-    deps = [":rubik"],
+    deps = [
+        ":rubik",
+        "@com_google_absl//absl/types:optional",
+    ],
 )

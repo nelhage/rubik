@@ -2,12 +2,18 @@
 #include <iostream>
 #include <algorithm>
 
+#include <regex>
+
+#include "absl/types/optional.h"
+
 #include "rubik.h"
 
 using namespace rubik;
 using namespace std;
 
 constexpr uint64_t N_ITERATIONS = 1 << 24;
+
+absl::optional<regex> benchmark_pattern;
 
 template<typename To, typename From>
 bool try_fmt(std::ostream &out, const std::string &unit, From dur) {
@@ -38,6 +44,11 @@ void format_duration(std::ostream &out, T dur) {
 
 template<typename T>
 void benchmark(const std::string &name, T body) {
+    if (benchmark_pattern.has_value()) {
+        if (!regex_search(name, *benchmark_pattern)) {
+            return;
+        }
+    }
     for (uint8_t order = 0; ; ++order) {
         auto before = chrono::steady_clock::now();
         uint64_t N = (1ul << order);
@@ -93,7 +104,15 @@ void bench_search() {
         });
 }
 
-int main() {
+int main(int argc, char **argv) {
+    if (argc > 1) {
+        try {
+            benchmark_pattern = regex(argv[1]);
+        } catch(regex_error &err) {
+            cerr << "bad pattern: " << err.what() << "\n";
+            return 1;
+        }
+    }
     bench_rotate();
     bench_invert();
     bench_search();
