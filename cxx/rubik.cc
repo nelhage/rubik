@@ -101,7 +101,7 @@ bool Cube::operator==(const Cube &rhs) const {
 }
 
 void Cube::sanityCheck() const {
-    if (debug_mode) {
+    if (!debug_mode) {
         return;
     }
 
