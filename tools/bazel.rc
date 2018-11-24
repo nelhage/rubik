@@ -7,10 +7,7 @@ build --host_cxxopt=-Wall
 build --host_cxxopt=-Werror
 build --host_cxxopt=-Wno-unused-parameter
 
-build:ndebug --cxxopt=-DNDEBUG
-
 build:opt -c opt
-build:opt --config=ndebug
 build:opt --copt=-O3
 build:opt --cxxopt=-O3
 build:opt --copt=-funroll-loops
