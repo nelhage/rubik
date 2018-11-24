@@ -16,8 +16,8 @@ using namespace rubik;
 using namespace std;
 
 static Cube solved;
-static vector<pair<Cube, Cube>> topSymmetries;
 
+vector<pair<Cube, Cube>> topSymmetries;
 
 void precompute() {
     auto r = rubik::from_facelets("GGGGWGGGGYYYRRRWWWOOOYGYRRRWBWOOOYYYRRRWWWOOOBBBBYBBBB");
@@ -67,7 +67,7 @@ int two_heuristic(const Cube &pos) {
     eu.mm = inv.getEdges();
     cu.mm = inv.getCorners();
     int d = rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]];
-    for (auto &p : topSymmetries) {
+    for (auto &p : symmetries) {
         auto c = p.second.apply(inv.apply(p.first));
         eu.mm = c.getEdges();
         cu.mm = c.getCorners();
@@ -198,8 +198,8 @@ void search_two() {
 int main() {
     precompute();
 
-    // search_heuristic(6);
-    search_two();
+    search_heuristic(8);
+    // search_two();
 
     return 0;
 }
