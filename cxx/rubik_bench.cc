@@ -7,6 +7,7 @@
 #include "absl/types/optional.h"
 
 #include "rubik.h"
+#include "rubik_impl.h"
 
 using namespace rubik;
 using namespace std;
@@ -86,6 +87,11 @@ void bench_search() {
             rubik::from_algorithm(
                     "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"));
     vector<Cube> out;
+
+    benchmark("brute-6", [&]() {
+            search(superflip, *rubik::qtm_root, 6,
+                   [](const Cube& pos, int) { asm("" :: "x"(pos.getEdges())); });
+        });
 
     benchmark("search-4", [&]() {
             if (search(superflip, out, 4)) {
