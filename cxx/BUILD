@@ -20,14 +20,21 @@ cc_library(
 
 cc_binary(
     name = "gen_tables",
-    srcs = ["tools/gen_tables.cc"],
+    srcs = [
+        "search.cc",
+        "tables.h",
+        "tools/gen_tables.cc",
+    ],
     copts = SSEOPT,
-    deps = [":rubik_core"],
+    includes = ["."],
+    deps = [
+        ":rubik_core",
+    ],
 )
 
 cc_library(
     name = "tables",
-    srcs = [":run_gen_tables"],
+    srcs = ["tables.cc"],
     hdrs = ["tables.h"],
     includes = ["."],
 )
@@ -41,9 +48,7 @@ genrule(
 
 cc_library(
     name = "rubik",
-    srcs = [
-        "search.cc",
-    ],
+    srcs = ["search.cc"],
     copts = SSEOPT,
     deps = [
         ":rubik_core",

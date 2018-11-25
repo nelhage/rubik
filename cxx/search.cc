@@ -5,6 +5,10 @@
 #include <vector>
 #include <iostream>
 
+#include <emmintrin.h>
+#include <tmmintrin.h>
+#include <smmintrin.h>
+
 using namespace std;
 
 namespace rubik {
@@ -64,7 +68,7 @@ bool prune_two(const Cube &pos, int depth) {
     corner_union cu;
     eu.mm = inv.getEdges();
     cu.mm = inv.getCorners();
-    auto d = rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]];
+    auto d = pair0_dist[(eu.arr[0] << 5) | cu.arr[0]];
     if (d > depth) {
         return true;
     }
@@ -72,7 +76,7 @@ bool prune_two(const Cube &pos, int depth) {
         auto c = p.second.apply(inv.apply(p.first));
         eu.mm = c.getEdges();
         cu.mm = c.getCorners();
-        if (rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]] > depth) {
+        if (pair0_dist[(eu.arr[0] << 5) | cu.arr[0]] > depth) {
             return true;
         }
     }
@@ -136,6 +140,81 @@ bool search(Cube start, vector<Cube> &path, int max_depth) {
         reverse(path.begin(), path.end());
     }
     return ok;
+}
+
+bool prefix_prune(const Cube &pos, int n, int depth) {
+    rubik::edge_union eu;
+    rubik::corner_union cu;
+
+    eu.mm = pos.getEdges();
+    cu.mm = pos.getCorners();
+
+    for (uint i = 0; i < eu.arr.size(); ++i) {
+        auto v = eu.arr[i];
+        if ((v & rubik::Cube::kEdgePermMask) >= n)
+            continue;
+        if (edge_dist[(i << 5) | v] > depth) {
+            return true;
+        }
+    }
+    for (uint i = 0; i < cu.arr.size(); ++i) {
+        auto v = cu.arr[i];
+        if ((v & rubik::Cube::kCornerPermMask) >= n)
+            continue;
+        if (corner_dist[(i << 5) | v] > depth) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int prefix_search(const Cube &init, int n) {
+    union {
+        uint8_t bits[16];
+        __m128i mm;
+    } maskbits;
+    for (int i = 0; i < 16; i++) {
+        if (i < n) {
+            maskbits.bits[i] = 0xff;
+        } else {
+            maskbits.bits[i] = 0;
+        }
+    }
+    const auto mask = maskbits.mm;
+    Cube solved;
+
+    for (int depth = 0;; ++depth) {
+        bool ok = search(
+                init, *qtm_root, depth,
+                [&](const Cube &pos, int) {
+                    return _mm_test_all_zeros(
+                            _mm_or_si128(
+                                    _mm_xor_si128(pos.getEdges(), solved.getEdges()),
+                                    _mm_xor_si128(pos.getCorners(), solved.getCorners())),
+                            mask);
+                },
+                [&](const Cube &pos, int depth) {
+                    if (prefix_prune(pos, n, depth)) {
+                        return true;
+                    }
+                    if (n >= 2) {
+                        auto inv = pos.invert();
+                        edge_union eu;
+                        corner_union cu;
+                        eu.mm = inv.getEdges();
+                        cu.mm = inv.getCorners();
+                        auto d = pair0_dist[(eu.arr[0] << 5) | cu.arr[0]];
+                        if (d > depth) {
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+                [&](int, const Cube &) {});
+        if (ok) {
+            return depth;
+        }
+    }
 }
 
 };
