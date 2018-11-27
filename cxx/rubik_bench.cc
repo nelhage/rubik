@@ -12,8 +12,6 @@
 using namespace rubik;
 using namespace std;
 
-constexpr uint64_t N_ITERATIONS = 1 << 24;
-
 absl::optional<regex> benchmark_pattern;
 
 template<typename To, typename From>

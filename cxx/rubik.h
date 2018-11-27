@@ -5,6 +5,7 @@
 #include <emmintrin.h>
 #include <array>
 #include <vector>
+#include <string>
 
 #include "absl/types/variant.h"
 

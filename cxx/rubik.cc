@@ -14,6 +14,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #include <cassert>
 
@@ -474,7 +475,7 @@ public:
 
     Result<Cube, Error> parse(const std::string &str) {
         if (str.size() != 6*9) {
-            return Error{"Wrong string size: " + str.size()};
+            return Error{absl::StrCat("Wrong string size: ", str.size())};
         }
         int i = 0;
         for (auto c : centers) {
