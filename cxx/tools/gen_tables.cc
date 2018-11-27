@@ -16,6 +16,7 @@ namespace rubik {
 array<int8_t, 32*32> corner_dist;
 array<int8_t, 32*32> edge_dist;
 array<int8_t, 32*32> pair0_dist;
+array<int8_t, 32*32*32*32> quad01_dist;
 };
 
 void floyd_warshall(size_t n, array<int8_t, 32*32> &grid) {
@@ -136,7 +137,87 @@ void compute_pair0_dist() {
     }
 }
 
-int main() {
+void compute_quad01_dist() {
+    Cube solved;
+
+    vector<int8_t> all_edge;
+    vector<int8_t> all_corner;
+    for (int e = 0; e < 12; ++e) {
+        for (int ea = 0; ea < 2; ++ea) {
+            all_edge.push_back((ea << rubik::Cube::kEdgeAlignShift) | e);
+        }
+    }
+    for (int c = 0; c < 8; ++c) {
+        for (int ca = 0; ca < 3; ++ca) {
+            all_corner.push_back((ca << rubik::Cube::kCornerAlignShift) | c);
+        }
+    }
+
+    fill(quad01_dist.begin(), quad01_dist.end(), kInfinity);
+
+    for (auto e0 : all_edge) {
+        for (auto e1 : all_edge) {
+            if ((e0 & rubik::Cube::kEdgePermMask) == (e1 &rubik::Cube::kEdgePermMask)) {
+                continue;
+            }
+            if ((e0 & rubik::Cube::kEdgePermMask) == 1
+                && (e1 & rubik::Cube::kEdgePermMask) != 0) {
+                continue;
+            }
+            if ((e1 & rubik::Cube::kEdgePermMask) == 0
+                && (e0 & rubik::Cube::kEdgePermMask) != 1) {
+                continue;
+            }
+            for (auto c0: all_corner) {
+                for (auto c1: all_corner) {
+                    if ((c0 & rubik::Cube::kCornerPermMask) == (c1 &rubik::Cube::kCornerPermMask)) {
+                        continue;
+                    }
+                    if ((c0 & rubik::Cube::kCornerPermMask) == 1
+                        && (c1 & rubik::Cube::kCornerPermMask) != 0) {
+                        continue;
+                    }
+                    if ((c1 & rubik::Cube::kCornerPermMask) == 0
+                        && (c0 & rubik::Cube::kCornerPermMask) != 1) {
+                        continue;
+                    }
+
+                    rubik::edge_union eu;
+                    rubik::corner_union cu;
+                    eu.mm = solved.getEdges();
+                    cu.mm = solved.getCorners();
+
+                    eu.arr[e0 & rubik::Cube::kEdgePermMask] = 0;
+                    eu.arr[e1 & rubik::Cube::kEdgePermMask] = 1;
+                    eu.arr[0] = e0;
+                    eu.arr[1] = e1;
+
+                    cu.arr[c0 & rubik::Cube::kCornerPermMask] = 0;
+                    cu.arr[c1 & rubik::Cube::kCornerPermMask] = 1;
+                    cu.arr[0] = c0;
+                    cu.arr[1] = c1;
+
+                    Cube pos(eu.mm, cu.mm);
+                    int d = prefix_search(pos.invert(), 2);
+                    quad01_dist[(e0 << 15) | (e1 << 10) |
+                                (c0 << 5)  | c1] = d;
+                    // cerr << "(" << (int)e0 << "," << (int)e1 << "," << (int)c0 << "," << (int)c1 << "): " << d << " (bound: " << (int)rubik::pair0_dist[(e0<<5)|c0] << ")\n";
+                }
+            }
+            cerr << "." << std::flush;
+        }
+        cerr << "\n";
+    }
+
+    render("quad01_dist", quad01_dist);
+}
+
+int main(int argc, char **argv) {
+    bool do_quad = false;
+    if (argc == 2 && string(argv[1]) == "--quad") {
+        do_quad = true;
+    }
+
     vector<rubik::Cube> moves{
         rubik::Rotations::L,
         rubik::Rotations::R,
@@ -156,12 +237,20 @@ int main() {
     compute_corner_dist(moves);
     compute_pair0_dist();
 
+    if (do_quad) {
+        compute_quad01_dist();
+    }
+
     cout << "#include \"tables.h\"\n";
     cout << "\n";
     cout << "namespace rubik {\n";
-    render("edge_dist", edge_dist);
-    render("corner_dist", corner_dist);
-    render("pair0_dist", pair0_dist);
+    if (do_quad) {
+        render("quad01_dist", quad01_dist);
+    } else {
+        render("edge_dist", edge_dist);
+        render("corner_dist", corner_dist);
+        render("pair0_dist", pair0_dist);
+    }
     cout << "}\n";
 
     return 0;
