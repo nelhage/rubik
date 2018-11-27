@@ -76,6 +76,29 @@ int two_heuristic(const Cube &pos) {
     return d;
 }
 
+int quad_heuristic(const Cube &pos) {
+    auto inv = pos.invert();
+    edge_union eu;
+    corner_union cu;
+    eu.mm = inv.getEdges();
+    cu.mm = inv.getCorners();
+    int d = rubik::quad01_dist[(eu.arr[0] << 15) |
+                               (eu.arr[1] << 10) |
+                               (cu.arr[0] << 5) |
+                               (cu.arr[1])];
+    assert(d >= 0);
+    for (auto &p : symmetries) {
+        auto c = p.second.apply(inv.apply(p.first));
+        eu.mm = c.getEdges();
+        cu.mm = c.getCorners();
+        d = max<int>(d, rubik::quad01_dist[(eu.arr[0] << 15) |
+                                           (eu.arr[1] << 10) |
+                                           (cu.arr[0] << 5) |
+                                           (cu.arr[1])]);
+    }
+    return d;
+}
+
 int face_heuristic(const Cube &pos) {
     rubik::edge_union eu;
     rubik::corner_union cu;
@@ -104,8 +127,11 @@ void search_heuristic(int max_depth) {
     search(
             Cube(), *qtm_root, max_depth,
             [&](const Cube &pos, int depth) {
-                int h = two_heuristic(pos);
-                assert(h <= max_depth - depth);
+                size_t h = quad_heuristic(pos);
+                assert(h <= (size_t)(max_depth - depth));
+                if (h >= vals[depth].size()) {
+                    return;
+                }
                 ++vals[depth][h];
             });
 

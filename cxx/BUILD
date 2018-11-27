@@ -74,7 +74,10 @@ cc_test(
 
 cc_binary(
     name = "rubik_scratch",
-    srcs = ["rubik_scratch.cc"],
+    srcs = [
+        "quad01.cc",
+        "rubik_scratch.cc",
+    ],
     copts = SSEOPT,
     deps = [
         ":rubik",

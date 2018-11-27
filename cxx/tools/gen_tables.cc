@@ -160,25 +160,9 @@ void compute_quad01_dist() {
             if ((e0 & rubik::Cube::kEdgePermMask) == (e1 &rubik::Cube::kEdgePermMask)) {
                 continue;
             }
-            if ((e0 & rubik::Cube::kEdgePermMask) == 1
-                && (e1 & rubik::Cube::kEdgePermMask) != 0) {
-                continue;
-            }
-            if ((e1 & rubik::Cube::kEdgePermMask) == 0
-                && (e0 & rubik::Cube::kEdgePermMask) != 1) {
-                continue;
-            }
             for (auto c0: all_corner) {
                 for (auto c1: all_corner) {
                     if ((c0 & rubik::Cube::kCornerPermMask) == (c1 &rubik::Cube::kCornerPermMask)) {
-                        continue;
-                    }
-                    if ((c0 & rubik::Cube::kCornerPermMask) == 1
-                        && (c1 & rubik::Cube::kCornerPermMask) != 0) {
-                        continue;
-                    }
-                    if ((c1 & rubik::Cube::kCornerPermMask) == 0
-                        && (c0 & rubik::Cube::kCornerPermMask) != 1) {
                         continue;
                     }
 
@@ -188,19 +172,29 @@ void compute_quad01_dist() {
                     cu.mm = solved.getCorners();
 
                     eu.arr[e0 & rubik::Cube::kEdgePermMask] = 0;
-                    eu.arr[e1 & rubik::Cube::kEdgePermMask] = 1;
                     eu.arr[0] = e0;
+
+                    int idx = e1 & rubik::Cube::kEdgePermMask;
+                    if (idx == 0) {
+                        idx = e0 & rubik::Cube::kEdgePermMask;
+                    }
+                    eu.arr[idx] = eu.arr[1];
                     eu.arr[1] = e1;
 
                     cu.arr[c0 & rubik::Cube::kCornerPermMask] = 0;
-                    cu.arr[c1 & rubik::Cube::kCornerPermMask] = 1;
                     cu.arr[0] = c0;
+
+                    idx = c1 & rubik::Cube::kCornerPermMask;
+                    if (idx == 0) {
+                        idx = c0 & rubik::Cube::kCornerPermMask;
+                    }
+                    cu.arr[idx] = cu.arr[1];
                     cu.arr[1] = c1;
 
                     Cube pos(eu.mm, cu.mm);
                     int d = prefix_search(pos.invert(), 2);
                     quad01_dist[(e0 << 15) | (e1 << 10) |
-                                (c0 << 5)  | c1] = d;
+                    (c0 << 5)  | c1] = d;
                     // cerr << "(" << (int)e0 << "," << (int)e1 << "," << (int)c0 << "," << (int)c1 << "): " << d << " (bound: " << (int)rubik::pair0_dist[(e0<<5)|c0] << ")\n";
                 }
             }
@@ -208,8 +202,6 @@ void compute_quad01_dist() {
         }
         cerr << "\n";
     }
-
-    render("quad01_dist", quad01_dist);
 }
 
 int main(int argc, char **argv) {
