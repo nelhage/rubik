@@ -91,11 +91,6 @@ void bench_search() {
                    [](const Cube& pos, int) { asm("" :: "x"(pos.getEdges())); });
         });
 
-    benchmark("search-4", [&]() {
-            if (search(superflip, out, 4)) {
-                abort();
-            }
-        });
     benchmark("search-8", [&]() {
             if (search(superflip, out, 8)) {
                 abort();
@@ -103,6 +98,11 @@ void bench_search() {
         });
     benchmark("search-10", [&]() {
             if (search(superflip, out, 10)) {
+                abort();
+            }
+        });
+    benchmark("search-14", [&]() {
+            if (search(superflip, out, 14)) {
                 abort();
             }
         });

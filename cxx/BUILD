@@ -34,7 +34,10 @@ cc_binary(
 
 cc_library(
     name = "tables",
-    srcs = ["tables.cc"],
+    srcs = [
+        "quad01.cc",
+        "tables.cc",
+    ],
     hdrs = ["tables.h"],
     includes = ["."],
 )
@@ -75,7 +78,6 @@ cc_test(
 cc_binary(
     name = "rubik_scratch",
     srcs = [
-        "quad01.cc",
         "rubik_scratch.cc",
     ],
     copts = SSEOPT,

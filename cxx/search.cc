@@ -62,6 +62,7 @@ vector<pair<Cube, Cube>> compute_symmetries() {
     return out;
 }
 
+bool prune_two(const Cube &pos, int depth) __attribute__((used));
 bool prune_two(const Cube &pos, int depth) {
     auto inv = pos.invert();
     edge_union eu;
@@ -77,6 +78,35 @@ bool prune_two(const Cube &pos, int depth) {
         eu.mm = c.getEdges();
         cu.mm = c.getCorners();
         if (pair0_dist[(eu.arr[0] << 5) | cu.arr[0]] > depth) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool prune_quad(const Cube &pos, int depth) {
+    auto inv = pos.invert();
+    edge_union eu;
+    corner_union cu;
+    eu.mm = inv.getEdges();
+    cu.mm = inv.getCorners();
+    int d = rubik::quad01_dist[(eu.arr[0] << 15) |
+                               (eu.arr[1] << 10) |
+                               (cu.arr[0] << 5) |
+                               (cu.arr[1])];
+    assert(d >= 0);
+    if (d > depth) {
+        return true;
+    }
+    for (auto &p : symmetries) {
+        auto c = p.second.apply(inv.apply(p.first));
+        eu.mm = c.getEdges();
+        cu.mm = c.getCorners();
+        auto d = rubik::quad01_dist[(eu.arr[0] << 15) |
+                                    (eu.arr[1] << 10) |
+                                    (cu.arr[0] << 5) |
+                                    (cu.arr[1])];
+        if (d > depth) {
             return true;
         }
     }
@@ -130,7 +160,7 @@ bool search(Cube start, vector<Cube> &path, int max_depth) {
                 auto flip = flip_heuristic(pos);
                 if (depth < flip)
                     return true;
-                return prune_two(pos, depth);
+                return prune_quad(pos, depth);
                 // return false;
             },
             [&](int depth, const Cube &rot) {
