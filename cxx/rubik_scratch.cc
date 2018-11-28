@@ -194,7 +194,11 @@ void search_two() {
                     corner_union cu;
                     eu.mm = inv.getEdges();
                     cu.mm = inv.getCorners();
-                    auto d = rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]];
+                    int d = rubik::quad01_dist[(eu.arr[0] << 15) |
+                                               (eu.arr[1] << 10) |
+                                               (cu.arr[0] << 5) |
+                                               (cu.arr[1])];
+                    assert(d >= 0);
                     if (d > depth) {
                         return true;
                     }
@@ -202,7 +206,11 @@ void search_two() {
                         auto c = p.second.apply(inv.apply(p.first));
                         eu.mm = c.getEdges();
                         cu.mm = c.getCorners();
-                        if (rubik::pair0_dist[(eu.arr[0] << 5) | cu.arr[0]] > depth) {
+                        auto d = rubik::quad01_dist[(eu.arr[0] << 15) |
+                                                    (eu.arr[1] << 10) |
+                                                    (cu.arr[0] << 5) |
+                                                    (cu.arr[1])];
+                        if (d > depth) {
                             return true;
                         }
                     }
@@ -224,8 +232,8 @@ void search_two() {
 int main() {
     precompute();
 
-    search_heuristic(8);
-    // search_two();
+    // search_heuristic(8);
+    search_two();
 
     return 0;
 }
