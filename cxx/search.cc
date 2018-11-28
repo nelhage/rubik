@@ -154,14 +154,7 @@ bool search(Cube start, vector<Cube> &path, int max_depth) {
                 return (pos == solved);
             },
             [&](const Cube &pos, int depth) {
-                auto edge = edge_heuristic(pos);
-                if (depth < edge)
-                    return true;
-                auto flip = flip_heuristic(pos);
-                if (depth < flip)
-                    return true;
                 return prune_quad(pos, depth);
-                // return false;
             },
             [&](int depth, const Cube &rot) {
                 path.push_back(rot);
