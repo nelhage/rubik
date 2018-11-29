@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: debian:stretch
+
+    steps:
+      - checkout
+      - run: apt-get update && apt-get -y install zip g++ python curl git
+      - run: cd /tmp/ && curl -LO https://github.com/bazelbuild/bazel/releases/download/0.19.2/bazel-0.19.2-installer-linux-x86_64.sh
+      - run: bash /tmp/bazel-0.19.2-installer-linux-x86_64.sh
+      - run: cp .bazelrc-circle .bazelrc-user
+      - run: bazel test //...

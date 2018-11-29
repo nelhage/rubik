@@ -2,4 +2,4 @@ __pycache__/
 *.pyc
 /rubik.egg-info
 /bazel-*
-.bazelrc
+.bazelrc-user
