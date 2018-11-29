@@ -63,10 +63,6 @@ void search(const Cube &pos,
            [&](int, const Cube&) {});
 }
 
-int flip_heuristic(const Cube &pos);
-int edge_heuristic(const Cube &pos);
-int prefix_search(const Cube &init, int n);
-
 extern const std::vector<std::pair<Cube, Cube>> symmetries;
 
 constexpr bool debug_mode =
