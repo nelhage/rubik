@@ -21,15 +21,15 @@ union corner_union {
     __m128i mm;
     struct {
         std::array<uint8_t, 8> arr;
-        uint32_t pad;
+        uint64_t pad;
     };
 };
 
-template <typename Check, typename Prune, typename Unwind>
+template <typename Check, typename Prune, typename Unwind, typename Fail>
 bool search(const Cube &pos,
             const std::vector<search_node> &moves,
             int depth,
-            const Check &check, const Prune &prune, const Unwind &unwind) {
+            const Check &check, const Prune &prune, const Fail &fail, const Unwind &unwind) {
     if (check(pos, depth)) {
         return true;
     }
@@ -41,12 +41,25 @@ bool search(const Cube &pos,
     }
     for (auto &rot: moves) {
         Cube next = pos.apply(rot.rotation);
-        if (search(next, *rot.next, depth-1, check, prune, unwind)) {
+        if (search(next, *rot.next, depth-1, check, prune, fail, unwind)) {
             unwind(depth, rot.rotation);
             return true;
         }
     }
+    fail(pos, depth);
     return false;
+}
+
+template <typename Check, typename Prune, typename Unwind>
+bool search(const Cube &pos,
+            const std::vector<search_node> &moves,
+            int depth,
+            const Check &check, const Prune &prune, const Unwind &unwind) {
+    return search(pos, moves, depth,
+           check,
+           prune,
+           [&](const Cube&, int) {},
+           unwind);
 }
 
 template <typename Visit>
