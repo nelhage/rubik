@@ -138,3 +138,16 @@ TEST_CASE("Search", "[rubik]") {
                     path.begin(), path.end()));
     }
 }
+
+/*
+  Sadly, this requires googletest
+
+TEST_CASE("Hashing", "[rubik]") {
+    CHECK(absl::VerifyTypeImplementsAbslHashCorrectly({
+              Cube(),
+              get<Cube>(from_algorithm("L R L' R'")),
+              Rotations::L,
+              Rotations::Linv,
+    }));
+}
+*/

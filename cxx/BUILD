@@ -13,6 +13,7 @@ cc_library(
     includes = ["."],
     linkopts = ["-pthread"],
     deps = [
+        "@com_google_absl//absl/hash",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:variant",
     ],

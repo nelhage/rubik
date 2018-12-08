@@ -68,6 +68,29 @@ public:
     const __m128i &getCorners() const {
         return corners;
     }
+
+    template <typename H>
+    friend H AbslHashValue(H h, const Cube& c) {
+        union {
+            __m128i mm;
+            struct {
+                uint64_t u1;
+                uint32_t u2;
+                uint32_t pad;
+            };
+        } eu;
+        eu.mm = c.edges;
+        union {
+            __m128i mm;
+            struct {
+                uint64_t u1;
+                uint64_t pad;
+            };
+        } cu;
+        cu.mm = c.corners;
+
+        return H::combine(std::move(h), eu.u1, eu.u2, cu.u1);
+    }
 };
 
 struct search_node;
