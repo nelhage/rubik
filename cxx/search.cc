@@ -147,13 +147,20 @@ int edge_heuristic(const Cube &pos) {
 }
 
 namespace {
-constexpr bool kCollectStats = false;
+constexpr bool kCollectStats =
+#ifdef COLLECT_STATS
+    true
+#else
+    false
+#endif
+;
 
 struct stats {
     using counter = uint64_t;
 
     counter visit = 0;
     counter prune = 0;
+    counter surplus = 0;
 };
 
 template<bool collect=kCollectStats> class collect_stats;
@@ -170,6 +177,7 @@ public:
         cerr << "# search depth=" << depth << " ok=" << ok << "\n";
         cerr << "visit:   " << store.visit << "\n";
         cerr << "prune:   " << store.prune << "\n";
+        cerr << "surplus: " << store.surplus << "\n";
     }
 };
 

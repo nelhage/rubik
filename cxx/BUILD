@@ -1,5 +1,12 @@
 SSEOPT = ["-msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2"]
 
+config_setting(
+    name = "collect_stats",
+    values = {
+        "define": "COLLECT_STATS=true",
+    },
+)
+
 cc_library(
     name = "rubik_core",
     srcs = [
@@ -53,7 +60,10 @@ genrule(
 cc_library(
     name = "rubik",
     srcs = ["search.cc"],
-    copts = SSEOPT,
+    copts = SSEOPT + select({
+        ":collect_stats": ["-DCOLLECT_STATS"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":rubik_core",
         ":tables",

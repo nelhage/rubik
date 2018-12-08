@@ -15,4 +15,6 @@ build:opt --cxxopt=-funroll-loops
 
 build:dbg -c dbg
 
+build:stats --define COLLECT_STATS=true
+
 try-import .bazelrc-user
