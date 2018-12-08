@@ -146,19 +146,66 @@ int edge_heuristic(const Cube &pos) {
     return lookup[missing];
 }
 
+namespace {
+constexpr bool kCollectStats = false;
+
+struct stats {
+    using counter = uint64_t;
+
+    counter visit = 0;
+    counter prune = 0;
+};
+
+template<bool collect=kCollectStats> class collect_stats;
+
+template<>
+class collect_stats<true> {
+    stats store;
+public:
+    void inc(stats::counter stats::* ptr) {
+        ++(store.*ptr);
+    }
+
+    void report(int depth, int ok) {
+        cerr << "# search depth=" << depth << " ok=" << ok << "\n";
+        cerr << "visit:   " << store.visit << "\n";
+        cerr << "prune:   " << store.prune << "\n";
+    }
+};
+
+template<>
+class collect_stats<false> {
+public:
+    void inc(stats::counter stats::* ptr) {}
+    void report(int depth, int ok) {}
+};
+
+}
+
 bool search(Cube start, vector<Cube> &path, int max_depth) {
+    collect_stats<> collect;
     path.resize(0);
+
     bool ok = search(
             start, *qtm_root, max_depth,
             [&](const Cube &pos, int) {
+                collect.inc(&stats::visit);
+
                 return (pos == solved);
             },
             [&](const Cube &pos, int depth) {
-                return prune_quad(pos, depth);
+                if (prune_quad(pos, depth)) {
+                    collect.inc(&stats::prune);
+                    return true;
+                };
+                return false;
             },
             [&](int depth, const Cube &rot) {
                 path.push_back(rot);
             });
+
+    collect.report(max_depth, ok);
+
     if (ok) {
         reverse(path.begin(), path.end());
     }
