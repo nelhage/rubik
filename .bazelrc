@@ -15,6 +15,8 @@ build:opt --cxxopt=-funroll-loops
 
 build:dbg -c dbg
 
+build:lto --copt=-flto=thin --linkopt=-flto=thin --linkopt=-Wl,--icf=all
+
 build:stats --define COLLECT_STATS=true
 
 try-import .bazelrc-user
