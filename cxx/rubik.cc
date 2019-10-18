@@ -184,34 +184,30 @@ const std::vector<search_node> *make_qtm_tree() {
                                         {rotations.B, &b},
                                         {rotations.Binv, &binv}});
 
-  const vector<pair<const Cube &, const Cube &>> inverses = {
-      {rotations.L, rotations.Linv}, {rotations.R, rotations.Rinv},
-      {rotations.U, rotations.Uinv}, {rotations.D, rotations.Dinv},
-      {rotations.F, rotations.Finv}, {rotations.B, rotations.Binv},
+  const vector<Cube> forward_moves = {
+      rotations.L, rotations.R, rotations.U,
+      rotations.D, rotations.F, rotations.B,
   };
-  const vector<pair<const Cube &, const Cube &>> obverse = {
+
+  const vector<pair<const Cube, const Cube>> obverse = {
       {rotations.L, rotations.R},
       {rotations.U, rotations.D},
       {rotations.F, rotations.B},
   };
   for (auto &ent : root) {
-    auto fwd = find_if(inverses.begin(), inverses.end(),
-                       [&](auto &pair) { return pair.first == ent.rotation; });
-    auto inv = find_if(inverses.begin(), inverses.end(),
-                       [&](auto &pair) { return pair.second == ent.rotation; });
+    bool isfwd = find(forward_moves.begin(), forward_moves.end(),
+                      ent.rotation) != forward_moves.end();
     auto ob = find_if(obverse.begin(), obverse.end(), [&](auto &pair) {
       return (pair.first == ent.rotation ||
               pair.first == ent.rotation.invert());
     });
     for (auto &next : root) {
-      // No need to ever search M -> M'
-      if (fwd != inverses.end() && fwd->second == next.rotation) {
+      // No need to ever search M -> M^{-1}
+      if (ent.rotation == next.rotation.invert()) {
         continue;
       }
-      // No need to search M' -> M
       // No need to search M' -> M'; it's the same as M -> M
-      if (inv != inverses.end() &&
-          (inv->second == next.rotation || inv->first == next.rotation)) {
+      if (!isfwd && next.rotation == ent.rotation) {
         continue;
       }
       // L and L' commute with R and R';
@@ -219,10 +215,8 @@ const std::vector<search_node> *make_qtm_tree() {
       // and never L -> R
       // similarly for U/D and F/B
       if (ob != obverse.end()) {
-        auto obinv = find_if(inverses.begin(), inverses.end(), [&](auto &pair) {
-          return pair.first == ob->second;
-        });
-        if (next.rotation == ob->second || next.rotation == obinv->second) {
+        if (next.rotation == ob->second ||
+            next.rotation.invert() == ob->second) {
           continue;
         }
       }
