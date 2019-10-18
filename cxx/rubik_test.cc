@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include "rubik.h"
+#include "rubik_impl.h"
 
 #include <algorithm>
 #include <iostream>
@@ -66,6 +67,51 @@ TEST_CASE("from_facelets", "[rubik]") {
     FAIL("error: " << get<rubik::Error>(c).error);
   }
   CHECK(get<Cube>(c) == Cube());
+}
+
+const rubik::search_node *find_node(const std::vector<search_node> *nodes,
+                                    const Cube &rot) {
+  auto fnd = find_if(nodes->begin(), nodes->end(),
+                     [&](auto &node) { return node.rotation == rot; });
+  if (fnd == nodes->end()) {
+    return nullptr;
+  }
+  return &*fnd;
+}
+
+TEST_CASE("qtm_tree", "[rubik]") {
+  CHECK(find_node(find_node(qtm_root, rotations.L)->next, rotations.Linv) ==
+        nullptr);
+  CHECK(find_node(find_node(qtm_root, rotations.Linv)->next, rotations.L) ==
+        nullptr);
+  CHECK(find_node(find_node(qtm_root, rotations.L)->next, rotations.L) !=
+        nullptr);
+
+  CHECK(find_node(find_node(qtm_root, rotations.R)->next, rotations.L) !=
+        nullptr);
+  CHECK(find_node(find_node(qtm_root, rotations.R)->next, rotations.Linv) !=
+        nullptr);
+  CHECK(find_node(find_node(qtm_root, rotations.L)->next, rotations.R) ==
+        nullptr);
+  CHECK(find_node(find_node(qtm_root, rotations.L)->next, rotations.Rinv) ==
+        nullptr);
+
+  vector<pair<Cube, string>> d2;
+  for (auto &node : *qtm_root) {
+    for (auto &next : *node.next) {
+      vector<Cube> path{node.rotation, next.rotation};
+      d2.emplace_back(make_pair(node.rotation.apply(next.rotation),
+                                get<string>(to_algorithm(path))));
+    }
+  }
+  for (auto &p1 : d2) {
+    for (auto &p2 : d2) {
+      if (&p1 == &p2)
+        continue;
+      INFO("duplicate len2 path first=" << p1.second << " snd=" << p2.second);
+      CHECK(p1.first != p2.first);
+    }
+  }
 }
 
 TEST_CASE("Search", "[rubik]") {
