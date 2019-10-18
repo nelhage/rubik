@@ -9,7 +9,7 @@ load(
 new_git_repository(
     name = "com_github_catchorg_catch2",
     build_file = "//third_party:catch.BUILD",
-    commit = "03d122a35c3f5c398c43095a87bc82ed44642516",  # v2.4.2
+    commit = "01ef7076f50f5f2b481ddf082e1afca3c926983f",
     remote = "https://github.com/catchorg/catch2",
 )
 
