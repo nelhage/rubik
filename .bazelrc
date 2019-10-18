@@ -16,6 +16,8 @@ build:opt --cxxopt=-funroll-loops
 build:dbg -c dbg
 
 build:lto --copt=-flto=thin --linkopt=-flto=thin --linkopt=-Wl,--icf=all
+build:asan --copt=-fsanitize=address
+build:asan --linkopt=-fsanitize=address
 
 build:stats --define COLLECT_STATS=true
 
