@@ -11,17 +11,21 @@
 using namespace rubik;
 using namespace std;
 
+namespace {
+Rotations rotations;
+struct {
+  string name;
+  Cube rot;
+} named_rotations[] = {
+    {"L", rotations.L}, {"R", rotations.R}, {"U", rotations.U},
+    {"D", rotations.D}, {"F", rotations.F}, {"B", rotations.B},
+};
+}; // namespace
+
 TEST_CASE("Default cube is constructible", "[rubik]") { Cube cube; }
 
 TEST_CASE("Rotations", "[rubik]") {
-  struct {
-    string name;
-    Cube rot;
-  } rotations[] = {
-      {"L", Rotations::L}, {"R", Rotations::R}, {"U", Rotations::U},
-      {"D", Rotations::D}, {"F", Rotations::F}, {"B", Rotations::B},
-  };
-  for (auto &tc : rotations) {
+  for (auto &tc : named_rotations) {
     INFO("Checking rotations: " << tc.name);
     CHECK(Cube().apply(tc.rot) == tc.rot);
     CHECK(tc.rot.apply(Cube()) == tc.rot);
@@ -31,18 +35,11 @@ TEST_CASE("Rotations", "[rubik]") {
 
 TEST_CASE("Other rotations", "[rubik]") {
   Cube cu;
-  cu.apply(Rotations::L).apply(Rotations::F);
+  cu.apply(rotations.L).apply(rotations.F);
 }
 
 TEST_CASE("Invert", "[rubik]") {
-  struct {
-    string name;
-    Cube rot;
-  } rotations[] = {
-      {"L", Rotations::L}, {"R", Rotations::R}, {"U", Rotations::U},
-      {"D", Rotations::D}, {"F", Rotations::F}, {"B", Rotations::B},
-  };
-  for (auto &tc : rotations) {
+  for (auto &tc : named_rotations) {
     INFO("Checking inversions: " << tc.name);
     CHECK(tc.rot.apply(tc.rot.invert()) == Cube());
     CHECK(tc.rot.invert().apply(tc.rot) == Cube());
@@ -82,7 +79,7 @@ TEST_CASE("Search", "[rubik]") {
           "R",
           1,
           true,
-          {Rotations::Rinv},
+          {rotations.Rinv},
       },
       {
           "R U",
@@ -94,7 +91,7 @@ TEST_CASE("Search", "[rubik]") {
           "R U",
           2,
           true,
-          {Rotations::Uinv, Rotations::Rinv},
+          {rotations.Uinv, rotations.Rinv},
       },
       {
           "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2",
@@ -107,22 +104,22 @@ TEST_CASE("Search", "[rubik]") {
           4,
           true,
           {
-              Rotations::Binv,
-              Rotations::U,
-              Rotations::Rinv,
+              rotations.Binv,
+              rotations.U,
+              rotations.Rinv,
           },
       },
       {
           "R L",
           2,
           true,
-          {Rotations::Rinv, Rotations::Linv},
+          {rotations.Rinv, rotations.Linv},
       },
       {
           "R2",
           4,
           true,
-          {Rotations::R, Rotations::R},
+          {rotations.R, rotations.R},
       },
   };
   for (auto &tc : tests) {
@@ -143,8 +140,8 @@ TEST_CASE("Hashing", "[rubik]") {
     CHECK(absl::VerifyTypeImplementsAbslHashCorrectly({
               Cube(),
               get<Cube>(from_algorithm("L R L' R'")),
-              Rotations::L,
-              Rotations::Linv,
+              rotations.L,
+              rotations.Linv,
     }));
 }
 */

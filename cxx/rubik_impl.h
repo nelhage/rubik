@@ -4,7 +4,7 @@
 
 namespace rubik {
 struct search_node {
-  const Cube &rotation;
+  const Cube rotation;
   std::vector<search_node> *next;
 };
 extern const std::vector<search_node> *qtm_root;

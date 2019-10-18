@@ -287,12 +287,10 @@ int main(int argc, char **argv) {
     do_quad = true;
   }
 
-  vector<rubik::Cube> moves{
-      rubik::Rotations::L,    rubik::Rotations::R,    rubik::Rotations::U,
-      rubik::Rotations::D,    rubik::Rotations::F,    rubik::Rotations::B,
-      rubik::Rotations::Linv, rubik::Rotations::Rinv, rubik::Rotations::Uinv,
-      rubik::Rotations::Dinv, rubik::Rotations::Finv, rubik::Rotations::Binv,
-  };
+  vector<rubik::Cube> moves;
+  for (auto &node : *qtm_root) {
+    moves.emplace_back(node.rotation);
+  }
 
   compute_edge_dist(moves);
   compute_corner_dist(moves);

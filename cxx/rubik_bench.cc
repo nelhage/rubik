@@ -14,6 +14,10 @@ using namespace std;
 
 absl::optional<regex> benchmark_pattern;
 
+namespace {
+Rotations rotations;
+};
+
 template <typename To, typename From>
 bool try_fmt(std::ostream &out, const std::string &unit, From dur) {
   auto to = chrono::duration_cast<To>(dur);
@@ -66,8 +70,8 @@ template <typename T> void benchmark(const std::string &name, T body) {
 }
 
 void bench_rotate() {
-  Cube cube = Rotations::R;
-  benchmark("rotate", [&]() { cube = cube.apply(Rotations::L); });
+  Cube cube = rotations.R;
+  benchmark("rotate", [&]() { cube = cube.apply(rotations.L); });
 }
 
 void bench_invert() {

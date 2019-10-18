@@ -141,68 +141,58 @@ static constexpr uint8_t C1 = 1 << Cube::kCornerAlignShift;
 static constexpr uint8_t C2 = 2 << Cube::kCornerAlignShift;
 }; // namespace
 
-const Cube Rotations::L({4, 1, 2, 3, 8, 5, 6, 0, 7, 9, 10, 11},
-                        {C1 | 4, C0 | 1, C0 | 2, C2 | 0, C2 | 7, C0 | 5, C0 | 6,
-                         C1 | 3});
-const Cube Rotations::L2(L.apply(L));
-const Cube Rotations::Linv(L.invert());
+Rotations::Rotations()
+    : L({4, 1, 2, 3, 8, 5, 6, 0, 7, 9, 10, 11},
+        {C1 | 4, C0 | 1, C0 | 2, C2 | 0, C2 | 7, C0 | 5, C0 | 6, C1 | 3}),
+      L2(L.apply(L)), Linv(L.invert()),
 
-const Cube Rotations::R({0, 1, E | 6, 3, 4, E | 2, E | 10, 7, 8, 9, E | 5, 11},
-                        {C0 | 0, C2 | 2, C1 | 6, C0 | 3, C0 | 4, C1 | 1, C2 | 5,
-                         C0 | 7});
-const Cube Rotations::R2(R.apply(R));
-const Cube Rotations::Rinv(R.invert());
+      R({0, 1, E | 6, 3, 4, E | 2, E | 10, 7, 8, 9, E | 5, 11},
+        {C0 | 0, C2 | 2, C1 | 6, C0 | 3, C0 | 4, C1 | 1, C2 | 5, C0 | 7}),
+      R2(R.apply(R)), Rinv(R.invert()),
 
-const Cube Rotations::U({3, 0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11},
-                        {C0 | 3, C0 | 0, C0 | 1, C0 | 2, C0 | 4, C0 | 5, C0 | 6,
-                         C0 | 7});
-const Cube Rotations::U2(U.apply(U));
-const Cube Rotations::Uinv(U.invert());
+      U({3, 0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11},
+        {C0 | 3, C0 | 0, C0 | 1, C0 | 2, C0 | 4, C0 | 5, C0 | 6, C0 | 7}),
+      U2(U.apply(U)), Uinv(U.invert()),
 
-const Cube Rotations::D({0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 8},
-                        {C0 | 0, C0 | 1, C0 | 2, C0 | 3, C0 | 5, C0 | 6, C0 | 7,
-                         C0 | 4});
-const Cube Rotations::D2(D.apply(D));
-const Cube Rotations::Dinv(D.invert());
+      D({0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 8},
+        {C0 | 0, C0 | 1, C0 | 2, C0 | 3, C0 | 5, C0 | 6, C0 | 7, C0 | 4}),
+      D2(D.apply(D)), Dinv(D.invert()),
 
-const Cube Rotations::F({0, 1, 2, E | 7, 4, 5, 3, E | 11, 8, 9, 10, 6},
-                        {C0 | 0, C0 | 1, C2 | 3, C1 | 7, C0 | 4, C0 | 5, C1 | 2,
-                         C2 | 6});
-const Cube Rotations::F2(F.apply(F));
-const Cube Rotations::Finv(F.invert());
+      F({0, 1, 2, E | 7, 4, 5, 3, E | 11, 8, 9, 10, 6},
+        {C0 | 0, C0 | 1, C2 | 3, C1 | 7, C0 | 4, C0 | 5, C1 | 2, C2 | 6}),
+      F2(F.apply(F)), Finv(F.invert()),
 
-const Cube Rotations::B({0, 5, 2, 3, E | 1, 9, 6, 7, 8, E | 4, 10, 11},
-                        {C2 | 1, C1 | 5, C0 | 2, C0 | 3, C1 | 0, C2 | 4, C0 | 6,
-                         C0 | 7});
-const Cube Rotations::B2(B.apply(B));
-const Cube Rotations::Binv(B.invert());
+      B({0, 5, 2, 3, E | 1, 9, 6, 7, 8, E | 4, 10, 11},
+        {C2 | 1, C1 | 5, C0 | 2, C0 | 3, C1 | 0, C2 | 4, C0 | 6, C0 | 7}),
+      B2(B.apply(B)), Binv(B.invert()) {}
 
 namespace {
 const std::vector<search_node> *make_qtm_tree() {
+  Rotations rotations;
   static std::vector<search_node> l, linv, r, rinv, u, uinv, d, dinv, f, finv,
       b, binv;
-  static std::vector<search_node> root({{Rotations::L, &l},
-                                        {Rotations::Linv, &linv},
-                                        {Rotations::R, &r},
-                                        {Rotations::Rinv, &rinv},
-                                        {Rotations::U, &u},
-                                        {Rotations::Uinv, &uinv},
-                                        {Rotations::D, &d},
-                                        {Rotations::Dinv, &dinv},
-                                        {Rotations::F, &f},
-                                        {Rotations::Finv, &finv},
-                                        {Rotations::B, &b},
-                                        {Rotations::Binv, &binv}});
+  static std::vector<search_node> root({{rotations.L, &l},
+                                        {rotations.Linv, &linv},
+                                        {rotations.R, &r},
+                                        {rotations.Rinv, &rinv},
+                                        {rotations.U, &u},
+                                        {rotations.Uinv, &uinv},
+                                        {rotations.D, &d},
+                                        {rotations.Dinv, &dinv},
+                                        {rotations.F, &f},
+                                        {rotations.Finv, &finv},
+                                        {rotations.B, &b},
+                                        {rotations.Binv, &binv}});
 
   const vector<pair<const Cube &, const Cube &>> inverses = {
-      {Rotations::L, Rotations::Linv}, {Rotations::R, Rotations::Rinv},
-      {Rotations::U, Rotations::Uinv}, {Rotations::D, Rotations::Dinv},
-      {Rotations::F, Rotations::Finv}, {Rotations::B, Rotations::Binv},
+      {rotations.L, rotations.Linv}, {rotations.R, rotations.Rinv},
+      {rotations.U, rotations.Uinv}, {rotations.D, rotations.Dinv},
+      {rotations.F, rotations.Finv}, {rotations.B, rotations.Binv},
   };
   const vector<pair<const Cube &, const Cube &>> obverse = {
-      {Rotations::L, Rotations::R},
-      {Rotations::U, Rotations::D},
-      {Rotations::F, Rotations::B},
+      {rotations.L, rotations.R},
+      {rotations.U, rotations.D},
+      {rotations.F, rotations.B},
   };
   for (auto &ent : root) {
     auto fwd = find_if(inverses.begin(), inverses.end(),
@@ -241,18 +231,24 @@ const std::vector<search_node> *make_qtm_tree() {
   }
   return &root;
 }
+
+const vector<pair<string, const Cube>> init_move_names() {
+  Rotations rotations;
+  return {
+      {"R", rotations.R}, {"R'", rotations.Rinv}, {"R2", rotations.R2},
+      {"L", rotations.L}, {"L'", rotations.Linv}, {"L2", rotations.L2},
+      {"F", rotations.F}, {"F'", rotations.Finv}, {"F2", rotations.F2},
+      {"B", rotations.B}, {"B'", rotations.Binv}, {"B2", rotations.B2},
+      {"U", rotations.U}, {"U'", rotations.Uinv}, {"U2", rotations.U2},
+      {"D", rotations.D}, {"D'", rotations.Dinv}, {"D2", rotations.D2},
+  };
+}
+
+const vector<pair<string, const Cube>> move_names = init_move_names();
+
 }; // namespace
 
 const vector<search_node> *qtm_root = make_qtm_tree();
-
-vector<pair<string, const Cube &>> moves = {
-    {"R", Rotations::R}, {"R'", Rotations::Rinv}, {"R2", Rotations::R2},
-    {"L", Rotations::L}, {"L'", Rotations::Linv}, {"L2", Rotations::L2},
-    {"F", Rotations::F}, {"F'", Rotations::Finv}, {"F2", Rotations::F2},
-    {"B", Rotations::B}, {"B'", Rotations::Binv}, {"B2", Rotations::B2},
-    {"U", Rotations::U}, {"U'", Rotations::Uinv}, {"U2", Rotations::U2},
-    {"D", Rotations::D}, {"D'", Rotations::Dinv}, {"D2", Rotations::D2},
-};
 
 Result<Cube, Error> from_algorithm(const string &str) {
   Cube out;
@@ -260,9 +256,9 @@ Result<Cube, Error> from_algorithm(const string &str) {
   while (it != str.end()) {
     auto next = find(it, str.end(), ' ');
     string word(it, next);
-    auto fnd = find_if(moves.begin(), moves.end(),
+    auto fnd = find_if(move_names.begin(), move_names.end(),
                        [&](auto &ent) { return ent.first == word; });
-    if (fnd == moves.end()) {
+    if (fnd == move_names.end()) {
       return Error{"unknown move: " + word};
     }
     out = out.apply(fnd->second);
@@ -277,9 +273,9 @@ Result<Cube, Error> from_algorithm(const string &str) {
 Result<string, Error> to_algorithm(const vector<Cube> &path) {
   stringstream out;
   for (auto &cube : path) {
-    auto fnd = find_if(moves.begin(), moves.end(),
+    auto fnd = find_if(move_names.begin(), move_names.end(),
                        [&](auto &ent) { return ent.second == cube; });
-    if (fnd == moves.end()) {
+    if (fnd == move_names.end()) {
       return Error{"Unrecognized rotation"};
     }
     if (&cube != &path.front()) {

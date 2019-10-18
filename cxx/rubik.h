@@ -107,14 +107,14 @@ Result<std::string, Error> to_algorithm(const std::vector<Cube> &path);
 
 class Rotations {
 public:
-  static const Cube L, L2, Linv;
-  static const Cube R, R2, Rinv;
-  static const Cube U, U2, Uinv;
-  static const Cube D, D2, Dinv;
-  static const Cube F, F2, Finv;
-  static const Cube B, B2, Binv;
+  const Cube L, L2, Linv;
+  const Cube R, R2, Rinv;
+  const Cube U, U2, Uinv;
+  const Cube D, D2, Dinv;
+  const Cube F, F2, Finv;
+  const Cube B, B2, Binv;
 
-  Rotations() = delete;
+  Rotations();
 };
 
 }; // namespace rubik
